@@ -1,0 +1,44 @@
+# Use this line for debug purposes
+#SELECT DISTINCT ?company ?companyLabel ?countryLabel ?totalRevenueAmount ?totalRevenueUnitLabel ?totalRevenueRateDate ?EURConversionRate ?TotalRevenueEUR ?convRateDate WHERE {
+SELECT DISTINCT ?company ?companyLabel ?countryLabel ?countryAltLabel WHERE {
+  # Find all companies and their corresponding country(ies) - yes, some companies are associated with multiple
+  ?company p:P31 ?companyStatement.
+  ?companyStatement (ps:P31/(wdt:P279*)) wd:Q4830453.
+  ?company p:P2139 ?totalRevenueStatement.
+  ?company wdt:P17 ?country.
+
+  # For each company, find the amount, unit (currency), and date quantifier of any total revenue data entry
+  ?totalRevenueStatement psv:P2139 ?totalRevenue.
+  ?totalRevenueStatement pq:P585 ?totalRevenueRateDate.
+  ?totalRevenue wikibase:quantityAmount ?totalRevenueAmount.
+  ?totalRevenue wikibase:quantityUnit ?totalRevenueUnit.
+  # Now, try to find a price relation (currency exchange rate) mapping this currency to EUR
+  # I used EUR here because Wikidata seems to have the most conversion rates for that
+  OPTIONAL {
+    ?totalRevenueUnit p:P2284 ?priceStatement.
+    ?priceStatement psv:P2284 ?price.
+    ?price wikibase:quantityAmount ?EURConversionRate.  # quantity amt = conversion factor
+    ?price wikibase:quantityUnit wd:Q4916.          # quantity unit = fixed to EUR
+    ?priceStatement pq:P585 ?convRateDate.          # also keep track of the date of the conversion
+    # For both total revenue and currency exchange rate, keep only the newest entry
+    # See https://stackoverflow.com/a/49072878
+    FILTER NOT EXISTS {
+      ?totalRevenueUnit p:P2284/pq:P585 ?convRateDate_.
+      FILTER (?convRateDate_ > ?convRateDate)
+    }
+  }
+
+  FILTER NOT EXISTS {
+    ?company p:P2139/pq:P585 ?totalRevenueRateDate_.
+    FILTER (?totalRevenueRateDate_ > ?totalRevenueRateDate)
+  }
+
+  # If we can't find a conversion rate or the currency is already EUR (meaning no currency relation exists),
+  # let's just fill in the conversion rate as 1.0
+  BIND(IF(BOUND(?EURConversionRate),?EURConversionRate,1.0) AS ?EURConversionRate)
+
+  # Then do the math and filter only companies with >= 2 billion EUR total revenue
+  BIND((?totalRevenueAmount * ?EURConversionRate) AS ?TotalRevenueEUR) .
+  FILTER(?TotalRevenueEUR >= "2000000000"^^xsd:decimal)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
