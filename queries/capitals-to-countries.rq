@@ -1,0 +1,13 @@
+# P31 = instance of, Q3624078 = sovereign state
+# P1376 = capital of
+# P582 = end time, P585 = point in time (filter out former capitals)
+# Q27554677 = former capital (it's a bit inconsistent, but some places have this attached instead?)
+# NOTE: in the SPARQL client, we need to add a language specifically as [AUTO_LANGUAGE] won't work
+SELECT DISTINCT ?city ?cityLabel ?country ?countryLabel ?countryAltLabel WHERE {
+  ?country wdt:P31 wd:Q3624078.
+  ?city p:P1376 ?capitalStatement.
+  ?capitalStatement ps:P1376 ?country.
+  FILTER(NOT EXISTS { ?capitalStatement (pq:P582|pq:P585) ?endTime. })
+  FILTER(NOT EXISTS { ?city wdt:P31 wd:Q27554677. })
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
