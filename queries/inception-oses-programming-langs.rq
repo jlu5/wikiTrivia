@@ -1,0 +1,10 @@
+SELECT ?item ?itemLabel ?inceptionDateLabel
+WHERE
+{
+  # Q9143 = programming languages
+  # Q9135 = operating systems
+  VALUES ?itemBag { wd:Q9135 wd:Q9143 }
+  ?item wdt:P31 ?itemBag.
+  ?item wdt:P571 ?inceptionDate;
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}

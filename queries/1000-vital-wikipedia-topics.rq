@@ -1,0 +1,8 @@
+# This one is a bit weird because the question and answer stem from the same entity, but fields
+# returned by SELECT must all be unique in name
+SELECT (?item AS ?questionItem) ?itemDescription (?item AS ?answerItem) ?itemLabel ?itemAltLabel
+WHERE
+{
+  ?item wdt:P5008 wd:Q5460604.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". } # Helps get the label in your language, if not, then en language
+}
