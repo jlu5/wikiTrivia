@@ -38,7 +38,7 @@ score_answer(UserAnswer, RHSLabel, 0) :-
 
 % ask_questions will take in a Row, prompt the user with the question, and verify the response. It will recurse with further questions until RemainingQuestions becomes 0
 ask_questions(_, _, 0, Score) :-
-  writeln(Score).
+  format("Your final score is: ~d!\n", [Score]).
 ask_questions(AllRows, FormatString, RemainingQuestions, CurrentScore) :-
   random_member(Row, AllRows),
   parse_row(Row, LHSNode, LHSLabel, RHSNode, RHSLabel, RHSAltLabels),
