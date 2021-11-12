@@ -1,14 +1,20 @@
 :- use_module(library(readutil)).
 :- use_module(library(semweb/sparql_client)).
 
-get_data(Row) :-
-  read_file_to_string("queries/capitals-to-countries.rq", RequestString, []),
+% Returns rows for a SPARQL query given a filename to load the query from
+% e.g. get_rows_from_query_file("queries/capitals-to-countries.rq", Row)
+get_rows_from_rq_file(Filename, Row) :-
+  read_file_to_string(Filename, RequestString, []),
   sparql_query(RequestString,
                Row,
                [ scheme(https),
                  host('query.wikidata.org'),
                  path('/sparql')
                ]).
+
+% Returns all rows for a SPARQL query given a filename to load the query from
+get_all_from_rq_file(Filename, AllRows) :-
+  findall(Row, get_rows_from_rq_file(Filename, Row), AllRows).
 
 % Parse a Q&A Row into its constituent components, where rows are in the form:
 % Row = row('http://www.wikidata.org/entity/Q1930',
