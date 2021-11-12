@@ -1,6 +1,6 @@
 # Use this line for debug purposes
-#SELECT DISTINCT ?company ?companyLabel ?countryLabel ?totalRevenueAmount ?totalRevenueUnitLabel ?totalRevenueRateDate ?EURConversionRate ?TotalRevenueEUR ?convRateDate WHERE {
-SELECT DISTINCT ?company ?companyLabel ?countryLabel ?countryAltLabel WHERE {
+#SELECT DISTINCT ?company ?companyLabel ?country ?countryLabel ?totalRevenueAmount ?totalRevenueUnitLabel ?totalRevenueRateDate ?EURConversionRate ?TotalRevenueEUR ?convRateDate WHERE {
+SELECT DISTINCT ?company ?companyLabel ?country ?countryLabel ?countryAltLabel WHERE {
   # Find all companies and their corresponding country(ies) - yes, some companies are associated with multiple
   ?company p:P31 ?companyStatement.
   ?companyStatement (ps:P31/(wdt:P279*)) wd:Q4830453.

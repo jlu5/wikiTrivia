@@ -14,7 +14,9 @@ get_rows_from_rq_file(Filename, Row) :-
 
 % Returns all rows for a SPARQL query given a filename to load the query from
 get_all_from_rq_file(Filename, AllRows) :-
-  findall(Row, get_rows_from_rq_file(Filename, Row), AllRows).
+  findall(Row, get_rows_from_rq_file(Filename, Row), RawRows),
+  % Exclude entries that are missing a label on either LHS or RHS
+  include(is_valid_row, RawRows, AllRows).
 
 % Parse a Q&A Row into its constituent components, where rows are in the form:
 % Row = row('http://www.wikidata.org/entity/Q1930',
@@ -28,3 +30,5 @@ parse_row(Row, LHSNode, LHSLabel, RHSNode, RHSLabel, RHSAltLabels) :-
   Row = row(LHSNode, literal(lang(_, LHSLabel)), RHSNode, literal(lang(_, RHSLabel)),
             % Alt labels are split by ","
             literal(lang(_, RHSAltLabelsRaw))), split_string(RHSAltLabelsRaw, ",", " ", RHSAltLabels).
+
+is_valid_row(Row) :- parse_row(Row, _, _, _, _, _).
