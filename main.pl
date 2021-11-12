@@ -30,14 +30,18 @@ choose_topic(QuizTopic) :-
 
 % ask_questions will take in a Row, prompt the user with the question, and verify the response. It will recurse with further questions until RemainingQuestions becomes 0
 ask_questions(_, 0).
-ask_questions(Row, RemainingQuestions) :- writeln("stub!").
+ask_questions(AllRows, RemainingQuestions) :- 
+  random_member(Row, AllRows),
+  parse_row(Row, LHSNode, LHSLabel, RHSNode, RHSLabel, RHSAltLabels),
+  write(LHSLabel),
+  write(RHSLabel).
 
 play_topic(quiz_topic(TopicFilename, TopicDescription)) :-
   writeln(format("Playing topic: ~w", [TopicDescription])),
   get_all_from_rq_file(TopicFilename, AllRows),
 
   num_questions(RemainingQuestions),
-  ask_questions(Row, RemainingQuestions).
+  ask_questions(AllRows, RemainingQuestions).
 
 main(_) :-
   choose_topic(QuizTopic), !,
