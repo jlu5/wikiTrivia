@@ -31,4 +31,7 @@ parse_row(Row, LHSNode, LHSLabel, RHSNode, RHSLabel, RHSAltLabels) :-
             % Alt labels are split by ","
             literal(lang(_, RHSAltLabelsRaw))), split_string(RHSAltLabelsRaw, ",", " ", RHSAltLabels).
 
+% is_valid_row(Row) produces true if a data row can be parsed in the format we expect
+% This in particular excludes rows with missing labels for either the question object or default answer,
+% as we can't meaningfully generate questions for those!
 is_valid_row(Row) :- parse_row(Row, _, _, _, _, _).
