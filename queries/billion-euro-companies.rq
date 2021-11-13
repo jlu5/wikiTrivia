@@ -42,4 +42,3 @@ SELECT DISTINCT ?company ?companyLabel ?country ?countryLabel ?countryAltLabel W
   FILTER(?TotalRevenueEUR >= "2000000000"^^xsd:decimal)
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
 }
-LIMIT 300

@@ -18,6 +18,18 @@ get_all_from_rq_file(Filename, AllRows) :-
   % Exclude entries that are missing a label on either LHS or RHS
   include(is_valid_row, RawRows, AllRows).
 
+% Parse a label from Wikidata's SPARQL output
+% This requires that labels we use to ask questions have have an translatable name attached, while answers may be either a translated names or a plain literal (e.g. a date)
+% Wikidata will normally fall back to producing the node ID, which is usually not helpful when asking questions
+parse_question_label(literal(lang(_, Label)), Label).
+parse_answer_label(literal(lang(_, Label)), Label).
+parse_answer_label(literal(Label), Label).
+
+% Parse a list of labels from Wikidata's SPARQL output
+parse_label_list('$null$', []).
+parse_label_list(literal(lang(_, RawLabel)), AltLabels) :-
+  split_string(RawLabel, ",", " ", AltLabels).
+
 % Parse a Q&A Row into its constituent components, where rows are in the form:
 % Row = row('http://www.wikidata.org/entity/Q1930',
 %           literal(lang(en, 'Ottawa')),
@@ -27,9 +39,10 @@ get_all_from_rq_file(Filename, AllRows) :-
 % Each row item corresponds to a variable (?abcd) selected in the SPARQL query, with the expected
 % order as shown.
 parse_row(Row, LHSNode, LHSLabel, RHSNode, RHSLabel, RHSAltLabels) :-
-  Row = row(LHSNode, literal(lang(_, LHSLabel)), RHSNode, literal(lang(_, RHSLabel)),
-            % Alt labels are split by ","
-            literal(lang(_, RHSAltLabelsRaw))), split_string(RHSAltLabelsRaw, ",", " ", RHSAltLabels).
+  Row = row(LHSNode, LHSLabelRaw, RHSNode, RHSLabelRaw, RHSAltLabelsRaw),
+  parse_question_label(LHSLabelRaw, LHSLabel), !,
+  parse_answer_label(RHSLabelRaw, RHSLabel), !,
+  parse_label_list(RHSAltLabelsRaw, RHSAltLabels), !.
 
 % is_valid_row(Row) produces true if a data row can be parsed in the format we expect
 % This in particular excludes rows with missing labels for either the question object or default answer,

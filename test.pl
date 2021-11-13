@@ -8,37 +8,62 @@
 % * Use `make test` to run the unit tests.
 % * At the project run, use `make prolog-eval` to run the unit tests.
 
-% Examples follow; please remove them in your project.
+:- ensure_loaded("sparql.pl").
+:- ensure_loaded("main.pl").
 
-% member(X, List) is true if X appears in List.
-% It succeeds once for each occurrence in List.
-member(X, [X|_]).
-member(X, [_|Xs]) :- member(X, Xs).
+:- begin_tests('parse_row').
 
-:- begin_tests('member').
+test('parse_row success - with alt labels', [nondet]) :-
+  parse_row(row('http://www.wikidata.org/entity/Q1930',
+                literal(lang(en, 'Ottawa')),
+                'http://www.wikidata.org/entity/Q16',
+                literal(lang(en, 'Canada')),
+                literal(lang(en, 'CA, ca, can, CAN, British North America, Can., Dominion of Canada'))),
+            % LHSNode
+            'http://www.wikidata.org/entity/Q1930',
+            % LHSLabel
+            'Ottawa',
+            % RHSNode
+            'http://www.wikidata.org/entity/Q16',
+            % RHSLabel
+            'Canada',
+            % RHSAltLabels
+            ["CA", "ca", "can", "CAN", "British North America", "Can.", "Dominion of Canada"]
+            ).
 
-test('base case, singleton list', [nondet]) :-
-    member(1, [1]).
+test('parse_row success - date as answer', [nondet]) :-
+  parse_row(row('http://www.wikidata.org/entity/Q2665141',
+                literal(lang(en, 'SWI-Prolog')),
+                literal(type('http://www.w3.org/2001/XMLSchema#dateTime', '1987-01-01T00:00:00Z')),
+                literal('1987-01-01T00:00:00Z'),
+                '$null$'),
+            'http://www.wikidata.org/entity/Q2665141',
+            'SWI-Prolog',
+            literal(type('http://www.w3.org/2001/XMLSchema#dateTime', '1987-01-01T00:00:00Z')),
+            % When we implement numerical scoring, we should parse this more completely
+            '1987-01-01T00:00:00Z',
+            []
+            ).
 
-test('base case, longer list', [nondet]) :-
-    member(x, [x, y, z]).
+test('parse_row fail - mismatched output', [fail]) :-
+  parse_row(row('http://www.wikidata.org/entity/Q1930',
+                literal(lang(en, 'Ottawa')),
+                'http://www.wikidata.org/entity/Q16',
+                literal(lang(en, 'Canada')),
+                literal(lang(en, 'CA, ca, can, CAN, British North America, Can., Dominion of Canada'))),
+            'http://www.wikidata.org/entity/Q1930',
+            'Ottawa',
+            'http://www.wikidata.org/entity/Q16',
+            'Canada',
+            []
+            ).
 
-test('recursive case', [nondet]) :-
-    member(y, [x, y, z]),
-    member(z, [x, y, z]).
+test('parse_row fail - missing LHS label', [fail]) :-
+  parse_row(row('http://www.wikidata.org/entity/Q4418164',
+                literal('Q4418164'), % missing LHS label
+                'http://www.wikidata.org/entity/Q159',
+                literal(lang(en, 'Russia')),
+                literal(lang(en, 'RF, RUS, Rus, RU, Russian Federation, ru, Rossija, Rossiya, Rossijskaja Federatsija, Rossiyskaya Federatsiya'))),
+            _LHSNode, _LHSLabel, _RHSNode, _RHSLabel, _RHSAltLabels).
 
-test('multiple results', [nondet, all(X =@= [x, y, z])]) :-
-    member(X, [x, y, z]).
-
-test('multiple but not all results', [nondet, all(X =@= [a, c])]) :-
-    member(pair(X, 1), [pair(a, 1), pair(b, 2), pair(c, 1)]).
-
-test('a failing test', [fail]) :-
-    member(not_there, [x, y, z]).
-
-test('some more failing tests', [fail]) :-
-    ( member(w, [x, y, z]) ;
-      member(3, []) ;
-      member(3, [1, 8, 2, 9, something_with_3_inside(3), [3]]) ).
-
-:- end_tests('member').
+:- end_tests('parse_row').

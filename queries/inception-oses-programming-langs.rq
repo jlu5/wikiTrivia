@@ -1,4 +1,4 @@
-SELECT ?item ?itemLabel ?inceptionDateLabel
+SELECT ?item ?itemLabel ?inceptionDate ?inceptionDateLabel ?inceptionAltLabels
 WHERE
 {
   # Q9143 = programming languages
