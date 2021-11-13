@@ -40,18 +40,29 @@ score_answer(_, CanonicalAnswer, _, 0) :-
 
 % ask_questions will take in a Row, prompt the user with the question, and verify the response. It will recurse with further questions until RemainingQuestions becomes 0
 ask_questions(_, _, 0, Score) :-
-  format("Your final score is: ~d!\n", [Score]).
+  num_questions(MaxPossibleScore), % Note: scoring may change in later versions
+  format("Your final score is: ~d/~d!\n", [Score, MaxPossibleScore]).
 ask_questions(AllRows, FormatString, RemainingQuestions, CurrentScore) :-
+  % Choose a random row from the list and parse it into the required bits
   random_member(Row, AllRows),
   parse_row(Row, _, LHSLabel, _, RHSLabel, RHSAltLabels),
+  % Format the question (in a topic specific FormatString) and print it
+  % (LHSLabel is the thing we're asking about, and RHSLabel + RHSAltLabel are the expected answers)
   format(atom(Question), FormatString, [LHSLabel]),
   writeln(""),
   writeln(Question),
+
+  % Then read a user answer and compute a score for it. Currently, the score for each question is simply 1 if the
+  % answer is correct and 0 otherwise
   read_line_to_string(user_input, UserAnswer),
-  % Score is 0 or 1
   score_answer(UserAnswer, RHSLabel, RHSAltLabels, Score),
+
+  % Add to the score and print it
   NewScore is CurrentScore + Score,
-  format("Your current score is: ~d \n", [NewScore]),
+  num_questions(MaxPossibleScore),
+  format("Your score so far is: ~d/~d\n", [NewScore, MaxPossibleScore]),
+
+  % Decrement the RemainingQuestions counter and recurse
   NewRemainingQuestions is RemainingQuestions - 1,
   ask_questions(AllRows, FormatString, NewRemainingQuestions, NewScore).
 
