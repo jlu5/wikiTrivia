@@ -1,4 +1,4 @@
-SELECT ?city ?cityCountry ?inception ?inceptionLabel ?inceptionAltLabel
+SELECT ?city ?cityCountry ?inception (?inception as ?inceptionLabel) ?inceptionAltLabel
 WHERE
 {
   ?city wdt:P31 wd:Q1549591.
@@ -11,6 +11,5 @@ WHERE
     bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
     ?city rdfs:label ?cityLabel.
     ?country rdfs:label ?countryLabel.
-    ?inception rdfs:label ?inceptionLabel.
   }
 }

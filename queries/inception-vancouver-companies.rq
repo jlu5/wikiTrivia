@@ -1,9 +1,0 @@
-SELECT ?entity ?entityLabel ?inceptionDate ?inceptionDateLabel ?inceptionDateAltLabels
-WHERE
-{
-  ?entity wdt:P159 ?city.
-  ?city wdt:P131 wd:Q1061069.
-  ?entity wdt:P571 ?inceptionDate.
-
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". } # Helps get the label in your language, if not, then en language
-}
