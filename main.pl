@@ -61,9 +61,9 @@ ask_and_score_questions(_, _, 0, Score) :-
   num_questions(MaxPossibleScore), % Note: scoring may change in later versions
   format("Your final score is: ~d/~d!\n", [Score, MaxPossibleScore]).
 ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore) :-
-  % Choose a random row from the list and parse it into the required bits
+  % Choose a random row from the list and unwrap it into the required bits
   random_member(Row, AllRows),
-  parse_row(Row, _, LHSLabel, _, RHSLabel, RHSAltLabels),
+  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
   % Format the question (in a topic specific FormatString) and print it
   % (LHSLabel is the thing we're asking about, and RHSLabel + RHSAltLabel are the expected answers)
   format(atom(Question), FormatString, [LHSLabel]),

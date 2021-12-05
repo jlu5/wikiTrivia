@@ -47,17 +47,18 @@ test('parse_row success - with alt labels', [nondet]) :-
                 'http://www.wikidata.org/entity/Q16',
                 literal(lang(en, 'Canada')),
                 literal(lang(en, 'CA, ca, can, CAN, British North America, Can., Dominion of Canada'))),
-            % LHSNode
-            'http://www.wikidata.org/entity/Q1930',
-            % LHSLabel
-            'Ottawa',
-            % RHSNode
-            'http://www.wikidata.org/entity/Q16',
-            % RHSLabel
-            'Canada',
-            % RHSAltLabels
-            ["CA", "ca", "can", "CAN", "British North America", "Can.", "Dominion of Canada"]
-            ).
+            [
+                % LHSNode
+                'http://www.wikidata.org/entity/Q1930',
+                % LHSLabel
+                'Ottawa',
+                % RHSNode
+                'http://www.wikidata.org/entity/Q16',
+                % RHSLabel
+                'Canada',
+                % RHSAltLabels
+                ["CA", "ca", "can", "CAN", "British North America", "Can.", "Dominion of Canada"]
+            ]).
 
 test('parse_row success - date as answer', [nondet]) :-
   parse_row(row('http://www.wikidata.org/entity/Q2665141',
@@ -65,13 +66,14 @@ test('parse_row success - date as answer', [nondet]) :-
                 literal(type('http://www.w3.org/2001/XMLSchema#dateTime', '1987-01-01T00:00:00Z')),
                 literal('1987-01-01T00:00:00Z'),
                 '$null$'),
-            'http://www.wikidata.org/entity/Q2665141',
-            'SWI-Prolog',
-            literal(type('http://www.w3.org/2001/XMLSchema#dateTime', '1987-01-01T00:00:00Z')),
-            % When we implement numerical scoring, we should parse this more completely
-            '1987-01-01T00:00:00Z',
-            []
-            ).
+            [
+                'http://www.wikidata.org/entity/Q2665141',
+                'SWI-Prolog',
+                literal(type('http://www.w3.org/2001/XMLSchema#dateTime', '1987-01-01T00:00:00Z')),
+                % When we implement numerical scoring, we should parse this more completely
+                '1987-01-01T00:00:00Z',
+                []
+            ]).
 
 test('parse_row fail - mismatched output', [fail]) :-
   parse_row(row('http://www.wikidata.org/entity/Q1930',
@@ -79,11 +81,13 @@ test('parse_row fail - mismatched output', [fail]) :-
                 'http://www.wikidata.org/entity/Q16',
                 literal(lang(en, 'Canada')),
                 literal(lang(en, 'CA, ca, can, CAN, British North America, Can., Dominion of Canada'))),
-            'http://www.wikidata.org/entity/Q1930',
-            'Ottawa',
-            'http://www.wikidata.org/entity/Q16',
-            'Canada',
-            []
+            [
+                'http://www.wikidata.org/entity/Q1930',
+                'Ottawa',
+                'http://www.wikidata.org/entity/Q16',
+                'Canada',
+                []
+            ]
             ).
 
 test('parse_row fail - missing LHS label', [fail]) :-
@@ -92,6 +96,6 @@ test('parse_row fail - missing LHS label', [fail]) :-
                 'http://www.wikidata.org/entity/Q159',
                 literal(lang(en, 'Russia')),
                 literal(lang(en, 'RF, RUS, Rus, RU, Russian Federation, ru, Rossija, Rossiya, Rossijskaja Federatsija, Rossiyskaya Federatsiya'))),
-            _LHSNode, _LHSLabel, _RHSNode, _RHSLabel, _RHSAltLabels).
+            _Result).
 
 :- end_tests('parse_row').
