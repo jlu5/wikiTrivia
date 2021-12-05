@@ -10,6 +10,7 @@
 
 % More tests in other files!!
 :- ensure_loaded("test-json_deserialize.pl").
+:- ensure_loaded("test-querycache.pl").
 :- ensure_loaded("test-sparql.pl").
 
 :- ensure_loaded("main.pl").
