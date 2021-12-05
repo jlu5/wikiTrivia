@@ -16,7 +16,7 @@ get_rows_from_rq_file(Filename, Row) :-
 % This will filter out entries that fail to parse: e.g. those missing a label on either LHS or RHS
 get_all_from_rq_file(Filename, AllRows) :-
   findall(Row, get_rows_from_rq_file(Filename, Row), RawRows),
-  maplist(parse_row, RawRows, AllRows).
+  convlist(parse_row, RawRows, AllRows).
 
 % Parse a label from Wikidata's SPARQL output
 % This requires that labels we use to ask questions have have an translatable name attached, while answers may be either a translated names or a plain literal (e.g. a date)

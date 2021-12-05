@@ -1,5 +1,4 @@
-#Cats
-SELECT ?entity ?entityLabel ?inceptionDate ?inceptionDateLabel ?inceptionDateAltLabels ?entityDescription
+SELECT ?entity ?entityLabel ?inceptionDate ?inceptionDateLabel ?inceptionDateAltLabels
 WHERE
 {
   ?entity wdt:P159 ?city.
