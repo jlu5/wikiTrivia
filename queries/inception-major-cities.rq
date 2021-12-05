@@ -1,0 +1,16 @@
+SELECT ?city ?cityCountry ?inception ?inceptionLabel ?inceptionAltLabel
+WHERE
+{
+  ?city wdt:P31 wd:Q1549591.
+  ?city wdt:P17 ?country.
+  ?city wdt:P571 ?inception.
+  # Show both city and country to disambiguate
+  BIND(CONCAT(?cityLabel, ", ", ?countryLabel) AS ?cityCountry).
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
+    ?city rdfs:label ?cityLabel.
+    ?country rdfs:label ?countryLabel.
+    ?inception rdfs:label ?inceptionLabel.
+  }
+}
