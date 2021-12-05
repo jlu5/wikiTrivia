@@ -1,28 +1,21 @@
 :- ensure_loaded("sparql.pl").
 
-:- begin_tests('parse_question_label').
+:- begin_tests('parse_label').
 
-test('parse_question_label success - translated literal', [nondet]) :-
-  parse_question_label(literal(lang(en, "Hello world")), "Hello world").
-test('parse_question_label fail - bare literal', [fail]) :-
-  parse_question_label(literal(1234), _).
-test('parse_question_label fail - mismatch', [fail]) :-
-  parse_question_label(literal(lang(en, "Hello world")), "dlrow olleH").
+test('parse_label success - translated literal', [nondet]) :-
+  parse_label(literal(lang(en, "Hello world")), "Hello world").
+test('parse_label success - bare literal', [nondet]) :-
+  parse_label(literal('2000-01-01T00:00:00Z'), '2000-01-01T00:00:00Z').
+test('parse_label success - date literal to year', [nondet]) :-
+  parse_label(literal(type('http://www.w3.org/2001/XMLSchema#dateTime', '2021-12-05T00:00:00Z')), 2021).
+test('parse_label success - decimal literal', [nondet]) :-
+  parse_label(literal(type('http://www.w3.org/2001/XMLSchema#decimal', '88')), 88).
+test('parse_label fail - output mismatch', [fail]) :-
+  parse_label(literal(lang(en, "Hello world")), "dlrow olleH").
+test('parse_label fail - invalid input', [fail]) :-
+  parse_label(notAliteral(lang(abcdef, "312312312")), _).
 
-:- end_tests('parse_question_label').
-
-:- begin_tests('parse_answer_label').
-
-test('parse_answer_label success - translated literal', [nondet]) :-
-  parse_answer_label(literal(lang(en, "Hello world")), "Hello world").
-test('parse_answer_label success - bare literal', [nondet]) :-
-  parse_answer_label(literal('2000-01-01T00:00:00Z'), '2000-01-01T00:00:00Z').
-test('parse_answer_label fail - output mismatch', [fail]) :-
-  parse_answer_label(literal(lang(en, "Hello world")), "dlrow olleH").
-test('parse_answer_label fail - invalid input', [fail]) :-
-  parse_answer_label(notAliteral(lang(abcdef, "312312312")), _).
-
-:- end_tests('parse_answer_label').
+:- end_tests('parse_label').
 
 :- begin_tests('parse_label_list').
 
@@ -74,6 +67,24 @@ test('parse_row success - date as answer', [nondet]) :-
                 '1987-01-01T00:00:00Z',
                 []
             ]).
+
+test('parse_row success - float as answer', [nondet]) :-
+    parse_row(
+      row(
+        'http://www.wikidata.org/entity/Q159260',
+        literal('Santa Clara, United States of America'),
+        'http://www.wikidata.org/entity/statement/Q159260-346E41FA-6D17-412D-AD9F-88C0C34A798A',
+        literal(type('http://www.w3.org/2001/XMLSchema#decimal', '21.9456')),
+        '$null$'
+      ),
+  [
+    'http://www.wikidata.org/entity/Q159260',
+    'Santa Clara, United States of America',
+    'http://www.wikidata.org/entity/statement/Q159260-346E41FA-6D17-412D-AD9F-88C0C34A798A',
+    21.9456,
+    []
+  ]
+  ).
 
 test('parse_row fail - mismatched output', [fail]) :-
   parse_row(row('http://www.wikidata.org/entity/Q1930',
