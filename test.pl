@@ -13,7 +13,7 @@
 :- ensure_loaded("test-querycache.pl").
 :- ensure_loaded("test-sparql.pl").
 
-:- ensure_loaded("main.pl").
+:- ensure_loaded("cli.pl").
 
 :- begin_tests('print_known_topics').
 
