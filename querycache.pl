@@ -19,6 +19,7 @@ get_cache_path(QueryPath, CachePath) :-
 % Save query results in JSON format
 save_query_results(QueryPath, AllRows) :-
   get_cache_path(QueryPath, CachePath),
+  access_file(CachePath, write),
   term_to_json(AllRows, JSONRows),
   open(CachePath, write, Stream),
   json_write_dict(Stream, JSONRows),
@@ -27,6 +28,7 @@ save_query_results(QueryPath, AllRows) :-
 % Load query results from JSON
 load_query_results(QueryPath, OutputRows) :-
   get_cache_path(QueryPath, CachePath),
+  access_file(CachePath, read),  % file exists & is accessible
   open(CachePath, read, Stream),
   json_read_dict(Stream, JSONRows),
   json_deserialize(JSONRows, OutputRows),

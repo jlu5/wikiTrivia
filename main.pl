@@ -1,5 +1,6 @@
 :- use_module(library(readutil)).
 :- ensure_loaded("sparql.pl").
+:- ensure_loaded("querycache.pl").
 
 %%% Constants (facts)
 
@@ -84,12 +85,20 @@ ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore)
   NewRemainingQuestions is RemainingQuestions - 1,
   ask_and_score_questions(AllRows, FormatString, NewRemainingQuestions, NewScore).
 
+% load_topic_questions/2 loads questions from the cache, or loads them from Wikidata if there is no cached result
+load_topic_questions(TopicFilename, OutputRows) :-
+  load_query_results(TopicFilename, OutputRows),
+  writeln("Loaded questions from cache.").
+load_topic_questions(TopicFilename, OutputRows) :-
+  writeln("Loading questions from Wikidata..."),
+  get_all_from_rq_file(TopicFilename, OutputRows),
+  writeln("Saving results to cache..."),
+  save_query_results(TopicFilename, OutputRows).
+
 % play_topic/1 takes in a quiz topic, loads data rows from Wikiedata, and starts the game
 play_topic(quiz_topic(TopicFilename, TopicDescription, FormatString)) :-
-  writeln("Loading questions from Wikidata..."),
-  get_all_from_rq_file(TopicFilename, AllRows),
-  format("Playing topic: ~w", [TopicDescription]),
-
+  format("Playing topic: ~w\n", [TopicDescription]),
+  load_topic_questions(TopicFilename, AllRows),
   num_questions(RemainingQuestions),
   ask_and_score_questions(AllRows, FormatString, RemainingQuestions, 0).
 
