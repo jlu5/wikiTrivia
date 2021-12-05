@@ -21,12 +21,37 @@ save_query_results(QueryPath, AllRows) :-
   get_cache_path(QueryPath, CachePath),
   term_to_json(AllRows, JSONRows),
   open(CachePath, write, Stream),
-  json_write_dict(Stream, JSONRows).
-
+  json_write_dict(Stream, JSONRows),
+  close(Stream).
 
 % Load query results from JSON
 load_query_results(QueryPath, OutputRows) :-
   get_cache_path(QueryPath, CachePath),
   open(CachePath, read, Stream),
   json_read_dict(Stream, JSONRows),
-  json_deserialize(JSONRows, OutputRows).
+  json_deserialize(JSONRows, OutputRows),
+  close(Stream).
+
+test :- Rows = [[
+                % LHSNode
+                'http://www.wikidata.org/entity/Q1930',
+                % LHSLabel
+                'Ottawa',
+                % RHSNode
+                'http://www.wikidata.org/entity/Q16',
+                % RHSLabel
+                'Canada',
+                % RHSAltLabels
+                ["CA", "ca", "can", "CAN", "British North America", "Can.", "Dominion of Canada"]
+            ],[
+                'http://www.wikidata.org/entity/Q2665141',
+                'SWI-Prolog',
+                literal(type('http://www.w3.org/2001/XMLSchema#dateTime', '1987-01-01T00:00:00Z')),
+                % When we implement numerical scoring, we should parse this more completely
+                '1987-01-01T00:00:00Z',
+                []
+            ]],
+    save_query_results("test.rq", Rows).
+
+test2(Rows) :-
+    load_query_results("test.rq", Rows).
