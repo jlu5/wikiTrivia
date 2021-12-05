@@ -13,7 +13,7 @@ optsspec(
     %     help('ignore existing cache files')]
 
     , [opt(rounds), type(integer), default(5),
-        shortflags([r]),longflags(["num-rounds"]),
+        shortflags([n]),longflags(["num-rounds"]),
         help('number of rounds to play')]
 
     , [opt(scoringrange), type(integer), default(20),

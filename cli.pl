@@ -3,11 +3,6 @@
 :- ensure_loaded("sparql.pl").
 :- ensure_loaded("querycache.pl").
 
-%%% Constants (facts)
-
-% FIXME: make this configurable
-num_questions(5).
-
 % known_topics stores a list of quiz_topics(Filename, QuizTopicName, QuestionFormatString), where:
 %   Filename is the SPARQL query to load to play this topic
 %   QuizTopicName is the description fo the topic shown when choosing topics
@@ -56,13 +51,12 @@ score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1) :-
 score_answer(_, CanonicalAnswer, _, 0) :-
   format("Incorrect! The answer was ~w \n", [CanonicalAnswer]).
 
-% ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore) takes in a list of all rows for a quiz topic:
-% It asks the user a question based off a random row, scores the input, and repeats with further questions until
-% RemainingQuestions becomes 0
-ask_and_score_questions(_, _, 0, Score) :-
-  num_questions(MaxPossibleScore), % Note: scoring may change in later versions
+% ask_and_score_questions/5 takes in a list of all rows for a quiz topic, the question format string, and the current score:
+% It asks the user a question based off a random row, computes a further score, and repeats with further questions until RemainingQuestions becomes 0.
+% MaxPossibleScore is currently the number of questions, but htis may change later
+ask_and_score_questions(_, _, 0, Score, MaxPossibleScore) :-
   format("Your final score is: ~d/~d!\n", [Score, MaxPossibleScore]).
-ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore) :-
+ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore) :-
   % Choose a random row from the list and unwrap it into the required bits
   random_member(Row, AllRows),
   Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
@@ -79,12 +73,11 @@ ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore)
 
   % Add to the score and print it
   NewScore is CurrentScore + Score,
-  num_questions(MaxPossibleScore),
   format("Your score so far is: ~d/~d\n", [NewScore, MaxPossibleScore]),
 
   % Decrement the RemainingQuestions counter and recurse
   NewRemainingQuestions is RemainingQuestions - 1,
-  ask_and_score_questions(AllRows, FormatString, NewRemainingQuestions, NewScore).
+  ask_and_score_questions(AllRows, FormatString, NewRemainingQuestions, NewScore, MaxPossibleScore).
 
 % load_topic_questions/2 loads questions from the cache, or loads them from Wikidata if there is no cached result
 load_topic_questions(TopicFilename, OutputRows) :-
@@ -97,11 +90,10 @@ load_topic_questions(TopicFilename, OutputRows) :-
   save_query_results(TopicFilename, OutputRows).
 
 % play_topic/1 takes in a quiz topic, loads data rows from Wikiedata, and starts the game
-play_topic(quiz_topic(TopicFilename, TopicDescription, FormatString)) :-
+play_topic(quiz_topic(TopicFilename, TopicDescription, FormatString), RemainingQuestions) :-
   format("Playing topic: ~w\n", [TopicDescription]),
   load_topic_questions(TopicFilename, AllRows),
-  num_questions(RemainingQuestions),
-  ask_and_score_questions(AllRows, FormatString, RemainingQuestions, 0).
+  ask_and_score_questions(AllRows, FormatString, RemainingQuestions, 0, RemainingQuestions).
 
 % parse_or_prompt_topic/3 generates a quiz topic from user input, or
 % calls choose_topic if no query file is passed in from the CLI args
