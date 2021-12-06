@@ -18,9 +18,10 @@
 :- begin_tests('print_known_topics').
 
 % test needs to be updated when we add more topics
-test('print_known_topics success - test if prints out expected output', Output == '1. Capital cities of various countries\n2. 1000 Vital Wikipedia topics (general Q&A)\n3. Billion euro companies... and where they\'re from\n') :-
+test('print_known_topics success - test if prints out expected output') :-
   known_topics(AllTopics),
-  with_output_to(atom(Output), print_known_topics(AllTopics, 1)).
+  with_output_to(atom(Output), print_known_topics(AllTopics, 1)),
+  re_match("^1\\. Capital cities.*\\n2\\. 1000 Vital Wikipedia.*\\n7\\..*"/ms, Output).
 
 :- end_tests('print_known_topics').
 
