@@ -16,7 +16,7 @@ known_topics([
   quiz_topic("queries/inception-vancouver-orgs.rq", "Vancouver-based organizations and what year they were founded", "When was ~w founded?"),
   quiz_topic("queries/altitude-major-cities.rq", "Major cities: elevation", "Altitude of ~w (metres)?"),
   quiz_topic("queries/inception-major-cities.rq", "Major cities: founding year", "What year was ~w founded?"),
-  quiz_topic("queries/inception-oses-programming-langs.rq", "Birth dates of programming langs and operating systems", "When was ~w created?")
+  quiz_topic("queries/inception-oses-programming-langs.rq", "Birth years of programming langs and operating systems", "When was ~w created?")
 ]).
 
 %%%
@@ -31,6 +31,8 @@ print_known_topics([quiz_topic(_Filename, TopicName, _FormatString)|Rest], Curre
 % choose_topic(QuizTopic) prompts for user input and produces the quiz_topic instance chosen by the user
 choose_topic(QuizTopic) :-
   known_topics(AllTopics),
+  length(AllTopics, NumTopics),
+  format("Choose a topic by entering its number (1 to ~w):\n", [NumTopics]),
   print_known_topics(AllTopics, 1),
   read_line_to_string(user_input, InputString),
   number_string(Index, InputString),
