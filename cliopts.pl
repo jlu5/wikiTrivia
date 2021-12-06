@@ -6,7 +6,7 @@ optsspec(
         shortflags([n]),longflags(["num-rounds"]),
         help('number of rounds to play')]
 
-    , [opt(scoringrange), type(integer), default(20),
+    , [opt(scoringrange), type(integer), default(100),
         shortflags(['R']),longflags(["scoring-range"]),
         help('range size of accepted answers for numerical based scoring')]
 
