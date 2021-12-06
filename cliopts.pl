@@ -2,17 +2,7 @@
 :- use_module(library(option)).
 
 optsspec(
-    [ [opt(scoringmode), type(atom), default('text'),
-        shortflags([s]),   longflags(['scoring-mode'] ),
-        help([ 'scoring mode; one of:'
-             , '  text: answers are plain text strings'
-             , '  number: answers are integers with a range of accepted answers'])]
-
-    % , [opt(nocache), type(boolean), default(true),
-    %     shortflags([nc]),   longflags(['skip-cache']),
-    %     help('ignore existing cache files')]
-
-    , [opt(rounds), type(integer), default(5),
+    [ [opt(rounds), type(integer), default(5),
         shortflags([n]),longflags(["num-rounds"]),
         help('number of rounds to play')]
 
@@ -40,12 +30,11 @@ check_show_help(true) :-
   halt.
 check_show_help(false).
 
-parse_cli_args(Argv, cliopts(QueryFile, QuestionFormatString, ScoringMode, ScoringRange, NumRounds)) :-
+parse_cli_args(Argv, cliopts(QueryFile, QuestionFormatString, ScoringRange, NumRounds)) :-
   optsspec(OptsSpec),
   writeln("wikiTrivia - a trivia quiz game based off Wikidata relations"),
   opt_parse(OptsSpec, Argv, Opts, _PositionalArgs),
 
-  option(scoringmode(ScoringMode), Opts),
   option(rounds(NumRounds), Opts),
   option(scoringrange(ScoringRange), Opts),
   option(queryfile(QueryFile), Opts), % allowed to be free I guess
