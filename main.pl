@@ -9,4 +9,4 @@
 main(Argv) :-
   parse_cli_args(Argv, cliopts(QueryFile, QuestionFormatString, ScoringMode, ScoringRange, NumRounds)), !,
   parse_or_prompt_topic(QueryFile, QuestionFormatString, QuizTopic), !,
-  play_topic(QuizTopic, NumRounds), !.
+  play_topic(QuizTopic, NumRounds, ScoringRange), !.

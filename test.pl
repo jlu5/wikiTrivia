@@ -27,13 +27,28 @@ test('print_known_topics success - test if prints out expected output', Output =
 :- begin_tests('ask_and_score_questions').
 
 % tests need to be updated when we choose variable number of questions
-test('ask_and_score_questions successful output with final score 0', Output == 'Your final score is: 0/5!\n') :-
-  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 0)).
+test('ask_and_score_questions successful output with final score 0', Output == 'Your final score is: 0.00/5!\n') :-
+  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 0, 5, _)).
 
-test('ask_and_score_questions successful output with final score 3', Output == 'Your final score is: 3/5!\n') :-
-  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 3)).
+test('ask_and_score_questions successful output with final score 3', Output == 'Your final score is: 3.00/5!\n') :-
+  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 3, 5, _)).
 
-test('ask_and_score_questions successful output with max possible score', Output == 'Your final score is: 5/5!\n') :-
-  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 5)).
+test('ask_and_score_questions successful output with max possible score', Output == 'Your final score is: 5.00/5!\n') :-
+  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 5, 5, _)).
+
+test('score_answer successful non-numerical canonical answer', Output == 'Correct! The (canonical) answer was Africa \n') :-
+  with_output_to(atom(Output), score_answer("Africa", "Africa", _, 1, _)).
+
+test('score_answer successful non-numerical alt answer', Output == 'Correct! The (canonical) answer was Africa \n') :-
+  with_output_to(atom(Output), score_answer("af", "Africa", ["af", "nasd"], 1, _)).
+
+test('score_answer successful numerical canonical answer', Output == 'Correct! The (canonical) answer was 11 \n') :-
+  with_output_to(atom(Output), score_answer("11", "11", _, 1, _)).
+
+test('score_answer not close numerical canonical answer', Output == 'You were off by over 20! The answer was 2000 \n') :-
+  with_output_to(atom(Output), score_answer('0', 2000, _, 0, 20)).
+
+test('score_answer close numerical canonical answer', Output == 'Close! The (canonical) answer was 2000 \n') :-
+  with_output_to(atom(Output), score_answer('1990', 2000, _, 0.5, 20)).
 
 :- end_tests('ask_and_score_questions').
