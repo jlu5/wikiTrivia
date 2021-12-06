@@ -27,13 +27,13 @@ test('print_known_topics success - test if prints out expected output', Output =
 :- begin_tests('ask_and_score_questions').
 
 % tests need to be updated when we choose variable number of questions
-test('ask_and_score_questions successful output with final score 0', Output == 'Your final score is: 0/5!\n') :-
-  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 0)).
+test('ask_and_score_questions successful output with final score 0', Output == 'Your final score is: 0.00/5!\n') :-
+  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 0, 5, _)).
 
-test('ask_and_score_questions successful output with final score 3', Output == 'Your final score is: 3/5!\n') :-
-  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 3)).
+test('ask_and_score_questions successful output with final score 3', Output == 'Your final score is: 3.00/5!\n') :-
+  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 3, 5, _)).
 
-test('ask_and_score_questions successful output with max possible score', Output == 'Your final score is: 5/5!\n') :-
-  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 5)).
+test('ask_and_score_questions successful output with max possible score', Output == 'Your final score is: 5.00/5!\n') :-
+  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 5, 5, _)).
 
 :- end_tests('ask_and_score_questions').
