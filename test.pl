@@ -49,6 +49,6 @@ test('score_answer not close numerical canonical answer', Output == 'You were of
   with_output_to(atom(Output), score_answer('0', 2000, _, 0, 20)).
 
 test('score_answer close numerical canonical answer', Output == 'Close! The (canonical) answer was 2000 \n') :-
-  with_output_to(atom(Output), score_answer('1990', 2000, _, 0.55, 20)).
+  with_output_to(atom(Output), score_answer('1990', 2000, _, 0.5, 20)).
 
 :- end_tests('ask_and_score_questions').
