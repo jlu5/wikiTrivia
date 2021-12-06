@@ -79,15 +79,22 @@ ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore,
   NewRemainingQuestions is RemainingQuestions - 1,
   ask_and_score_questions(AllRows, FormatString, NewRemainingQuestions, NewScore, MaxPossibleScore).
 
+log_cache_error(load, TopicFilename, Err) :- format('Error loading cache file ~w: ~w\n', [TopicFilename, Err]), fail.
+log_cache_error(save, TopicFilename, Err) :- format('Error saving cache file ~w: ~w\n', [TopicFilename, Err]).
+
 % load_topic_questions/2 loads questions from the cache, or loads them from Wikidata if there is no cached result
 load_topic_questions(TopicFilename, OutputRows) :-
-  load_query_results(TopicFilename, OutputRows),
+  catch(load_query_results(TopicFilename, OutputRows),
+        error(Err, _Context),
+        log_cache_error(load, TopicFilename, Err)),
   writeln("Loaded questions from cache.").
 load_topic_questions(TopicFilename, OutputRows) :-
   writeln("Loading questions from Wikidata..."),
   get_all_from_rq_file(TopicFilename, OutputRows),
   writeln("Saving results to cache..."),
-  save_query_results(TopicFilename, OutputRows).
+  catch(save_query_results(TopicFilename, OutputRows),
+        error(Err, _Context),
+        log_cache_error(save, TopicFilename, Err)).
 
 % play_topic/1 takes in a quiz topic, loads data rows from Wikiedata, and starts the game
 play_topic(quiz_topic(TopicFilename, TopicDescription, FormatString), RemainingQuestions) :-
