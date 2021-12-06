@@ -65,7 +65,7 @@ score_answer(UserAnswer, CanonicalAnswer, _, Score, ScoringRange) :-
   number(CanonicalAnswer),
   Diff is abs(NumUserAnswer - CanonicalAnswer),
   Diff < ScoringRange,
-  Numerator is 1 - abs(NumUserAnswer - CanonicalAnswer),
+  Numerator is 1 - Diff,
   Score is max(0, 1 + Numerator / ScoringRange),
   format("Close! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
