@@ -1,0 +1,14 @@
+SELECT ?entity ?questionLabel ?inception (?inception as ?inceptionLabel) ?inceptionAltLabels
+WHERE
+{
+  ?entity wdt:P159 ?city.
+  ?city wdt:P131 wd:Q1061069.
+  ?entity wdt:P571 ?inception.
+  BIND(CONCAT(?entityLabel, IF(BOUND(?entityDescription), CONCAT(" - ", ?entityDescription), "")) AS ?questionLabel).
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
+    ?entity rdfs:label ?entityLabel.
+    ?entity schema:description ?entityDescription.
+  }
+}

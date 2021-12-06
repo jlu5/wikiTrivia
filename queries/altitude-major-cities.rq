@@ -1,0 +1,26 @@
+SELECT ?city ?cityCountry ?elevationStatement ?elevationMetres ?elevationMetresAltLabel
+WHERE
+{
+  ?city wdt:P31 wd:Q1549591.
+  ?city wdt:P17 ?country.
+  ?city p:P2044 ?elevationStatement.
+  ?elevationStatement psv:P2044 ?elevation.
+  ?elevation wikibase:quantityAmount ?elevationAmt.
+  ?elevation wikibase:quantityUnit ?elevationUnit.
+
+  # Some values are given in feet - convert them to metres!
+  OPTIONAL {
+    ?elevationUnit p:P2442 ?conversionStatement.
+    ?conversionStatement psv:P2442 ?conversion.
+    ?conversion wikibase:quantityAmount ?conversionFactor.
+    ?conversion wikibase:quantityUnit wd:Q11573. # fixed to metres
+  }
+  BIND((?elevationAmt * ?conversionFactor) AS ?elevationMetres).
+  BIND(CONCAT(?cityLabel, ", ", ?countryLabel) AS ?cityCountry).
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
+    ?city rdfs:label ?cityLabel.
+    ?country rdfs:label ?countryLabel.
+  }
+}

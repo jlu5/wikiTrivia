@@ -9,9 +9,11 @@
 % * At the project run, use `make prolog-eval` to run the unit tests.
 
 % More tests in other files!!
+:- ensure_loaded("test-json_deserialize.pl").
+:- ensure_loaded("test-querycache.pl").
 :- ensure_loaded("test-sparql.pl").
 
-:- ensure_loaded("main.pl").
+:- ensure_loaded("cli.pl").
 
 :- begin_tests('print_known_topics').
 
