@@ -2,10 +2,14 @@ SELECT ?city ?cityCountry ?inception (?inception as ?inceptionLabel) ?inceptionA
 WHERE
 {
   ?city wdt:P31 wd:Q1549591.
+  ?city p:P17 ?countryStatement.
   ?city wdt:P17 ?country.
   ?city wdt:P571 ?inception.
   # Show both city and country to disambiguate
   BIND(CONCAT(?cityLabel, ", ", ?countryLabel) AS ?cityCountry).
+  # Exclude historical countries and former country associations
+  FILTER(NOT EXISTS { ?countryStatement (pq:P582|pq:P585) ?endTime. })
+  FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3024240. })
 
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
