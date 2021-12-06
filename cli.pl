@@ -12,7 +12,9 @@ known_topics([
   quiz_topic("queries/1000-vital-wikipedia-topics.rq", "1000 Vital Wikipedia topics (general Q&A)", "~w?"),
   quiz_topic("queries/billion-euro-companies.rq", "Billion euro companies... and where they're from", "What country is ~w based in?"),
   % Enable these once we have a more lenient way of scoring numerical answers!
-  quiz_topic("queries/inception-vancouver-orgs.rq", "Vancouver-based companies and when they were founded", "When was ~w founded?"),
+  quiz_topic("queries/inception-vancouver-orgs.rq", "Vancouver-based organizations and what year they were founded", "When was ~w founded?"),
+  quiz_topic("queries/altitude-major-cities.rq", "Major cities: elevation", "Altitude of ~w (metres)?"),
+  quiz_topic("queries/inception-major-cities.rq", "Major cities: founding year", "What year was ~w founded?"),
   quiz_topic("queries/inception-oses-programming-langs.rq", "Birth dates of programming langs and operating systems", "When was ~w created?")
 ]).
 
@@ -60,7 +62,7 @@ score_answer(UserAnswer, CanonicalAnswer, _, 0, ScoringRange) :-
   Diff >= ScoringRange,
   format("You were off by over ~w! The answer was ~w \n", [ScoringRange, CanonicalAnswer]).
 
-score_answer(UserAnswer, CanonicalAnswer, _, Score, ScoringRange) :- 
+score_answer(UserAnswer, CanonicalAnswer, _, Score, ScoringRange) :-
   atom_number(UserAnswer, NumUserAnswer),
   number(CanonicalAnswer),
   Diff is abs(NumUserAnswer - CanonicalAnswer),
