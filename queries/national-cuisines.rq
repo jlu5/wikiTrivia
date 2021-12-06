@@ -1,0 +1,21 @@
+# Many foods are associated with multiple countries, so the GROUP BY and GROUP CONCAT merge them into a single field.
+# As long as the names for each country are in altLabels, the game should deal with these all fine
+SELECT ?food ?foodLabel
+       (GROUP_CONCAT(?country; separator="; ") AS ?countries)
+       (GROUP_CONCAT(?countryLabel; separator=" / ") AS ?countryLabels)
+       (GROUP_CONCAT(CONCAT(?countryLabel, ", ", ?countryAltLabel); separator=", ") AS ?countryAltLabels)
+WHERE
+{
+  ?food wdt:P279 wd:Q2095. # take food TYPES, not individual products
+  ?food wdt:P495 ?country.
+  # Only keep results that refer to countries; not regions
+  ?country wdt:P31 wd:Q6256.
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
+    ?food rdfs:label ?foodLabel.
+    ?country rdfs:label ?countryLabel.
+    ?country skos:altLabel ?countryAltLabel.
+  }
+}
+GROUP BY ?food ?foodLabel

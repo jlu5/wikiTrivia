@@ -10,7 +10,8 @@
 known_topics([
   quiz_topic("queries/capitals-to-countries.rq", "Capital cities of various countries", "What country is ~w the capital of?"),
   quiz_topic("queries/1000-vital-wikipedia-topics.rq", "1000 Vital Wikipedia topics (general Q&A)", "~w?"),
-  quiz_topic("queries/billion-euro-companies.rq", "Billion euro companies... and where they're from", "What country is ~w based in?"),
+  quiz_topic("queries/billion-euro-companies.rq", "Companies worth a billion euros... and where they're from", "What country is ~w based in?"),
+  quiz_topic("queries/national-cuisines.rq", "National cuisines", "What country makes ~w?"),
   % Enable these once we have a more lenient way of scoring numerical answers!
   quiz_topic("queries/inception-vancouver-orgs.rq", "Vancouver-based organizations and what year they were founded", "When was ~w founded?"),
   quiz_topic("queries/altitude-major-cities.rq", "Major cities: elevation", "Altitude of ~w (metres)?"),
