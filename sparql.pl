@@ -44,6 +44,10 @@ parse_label(Item) :- writeln(format("Failed to parse answer label: ~w", Item)), 
 parse_label_list('$null$', []).
 parse_label_list(literal(lang(_, RawLabel)), AltLabels) :-
   split_string(RawLabel, ",", " ", AltLabels).
+parse_label_list(literal(RawLabel), AltLabels) :-
+  string(RawLabel), split_string(RawLabel, ",", " ", AltLabels).
+parse_label_list(literal(RawLabel), AltLabels) :-
+  atom(RawLabel), atom_string(RawLabel, RawLabelS), split_string(RawLabelS, ",", " ", AltLabels).
 
 % Parse a Q&A Row into its constituent components, where rows are in the form:
 % Row = row('http://www.wikidata.org/entity/Q1930',
