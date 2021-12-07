@@ -41,6 +41,9 @@ choose_topic(QuizTopic) :-
   writeln("Invalid input"),
   choose_topic(QuizTopic).
 
+% max number of tries
+max_chances(3). 
+
 % determine_question_type/2
 % tests if its a number based question (gives path 1)
 determine_question_type(CanonicalAnswer, 1) :- 
@@ -70,12 +73,17 @@ build_hint([_ | Rest], Length, 0) :-
 % build_hint/3
 % This prints out the letters that should be given as hints. This is called whenever NumTries is > 0. 
 build_hint([Head | Rest], Length, NumTries) :- 
-  NumTries > 0, 
   write(Head),
   write(" "),  
   LettersLeft is Length - 1, 
   TriesLeft is NumTries - 1, 
   build_hint(Rest, LettersLeft, TriesLeft). 
+
+% give_hint/2
+% default case when max_chances is used
+give_hint(_, NumTries) :-
+  ChancesUsed is NumTries + 1,
+  max_chances(ChancesUsed).
 
 % give_hint/2
 % when called gives hint and breaks up CanonicalAnswer into a char list
@@ -85,6 +93,7 @@ give_hint(CanonicalAnswer, NumTries) :-
   string_chars(CanonicalAnswer, Chars), 
   write("HINT: "), 
   build_hint(Chars, Length, NumTries).
+
 
 % text_score_answer/6 
 % This path is indicated as 1 in index parameter 5. This path is in the case where the player guesses a wrong answer. 
