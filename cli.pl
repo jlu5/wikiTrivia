@@ -256,7 +256,7 @@ load_topic_questions(TopicFilename, OutputRows) :-
         error(Err, _Context),
         log_cache_error(save, TopicFilename, Err)).
 
-% play_topic/1 takes in a quiz topic, loads data rows from Wikiedata, and starts the game
+% play_topic/1 takes in a quiz topic, loads data rows from Wikidata, and starts the game
 play_topic(quiz_topic(TopicFilename, TopicDescription, FormatString), RemainingQuestions, ScoringRange) :-
   format("Playing topic: ~w\n", [TopicDescription]),
   load_topic_questions(TopicFilename, AllRows),
