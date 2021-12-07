@@ -54,6 +54,13 @@ build_hint(_, 0, 0) :-
   writeln(""). 
 
 % build_hint/3
+% handles any space cases
+build_hint([' '| Rest], Length, 0) :-  
+  write("  "),
+  LettersLeft is Length - 1, 
+  build_hint(Rest, LettersLeft, 0).  
+
+% build_hint/3
 % This prints out the letters that are hidden as "_". This is called once NumTries reaches 0. 
 build_hint([_ | Rest], Length, 0) :- 
   write("_ "), 
@@ -63,6 +70,7 @@ build_hint([_ | Rest], Length, 0) :-
 % build_hint/3
 % This prints out the letters that should be given as hints. This is called whenever NumTries is > 0. 
 build_hint([Head | Rest], Length, NumTries) :- 
+  NumTries > 0, 
   write(Head),
   write(" "),  
   LettersLeft is Length - 1, 
@@ -76,21 +84,22 @@ give_hint(CanonicalAnswer, NumTries) :-
   string_length(CanonicalAnswer, Length), 
   string_chars(CanonicalAnswer, Chars), 
   write("HINT: "), 
-  build_hint(Chars, Length, NumTries),
-  writeln(""). 
+  build_hint(Chars, Length, NumTries).
 
 % text_score_answer/6 
 % This path is indicated as 1 in index parameter 5. This path is in the case where the player guesses a wrong answer. 
-text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1) :-
+text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1, NumTries) :-
   AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
   % First convert input and accepted answers to lowercase so that matches are case insensitive
   string_lower(UserAnswer, NormalizedUserAnswer),
   maplist(string_lower, AcceptableAnswers, NormalizedAcceptableAnswers),
-  \+ member(NormalizedUserAnswer, NormalizedAcceptableAnswers).
+  \+ member(NormalizedUserAnswer, NormalizedAcceptableAnswers), 
+  writeln(""), 
+  give_hint(CanonicalAnswer, NumTries).
 
 % text_score_answer/6 
 % This path is indicated as 1 in index parameter 5. This path is in the case where the player guesses the right answer. 
-text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 2) :-
+text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 2, _) :-
   AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
   % First convert input and accepted answers to lowercase so that matches are case insensitive
   string_lower(UserAnswer, NormalizedUserAnswer),
@@ -123,9 +132,8 @@ loop_current_question(Row, FormatString, CurrentScore, NumChances, FinalScore, M
   NumTries is MaxChances - NumChances, 
   % Tells player the number of chances they have left before they lose all the points for this question
   format(" Number of Chances Left: ~d\n", NumChances),
-  give_hint(RHSLabel, NumTries),
   read_line_to_string(user_input, UserAnswer),
-  text_score_answer(UserAnswer, RHSLabel, RHSAltLabels, FoundAnswer), 
+  text_score_answer(UserAnswer, RHSLabel, RHSAltLabels, FoundAnswer, NumTries), 
   % offsets for recursion
   check_num_tries(NumTries, FoundAnswer, Offset), 
   RemainingChances is NumChances - 1 - Offset,
