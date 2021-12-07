@@ -36,6 +36,148 @@ choose_topic(QuizTopic) :-
   writeln("Invalid input"),
   choose_topic(QuizTopic).
 
+% determine_question_type/2
+% tests if its a number based question (gives path 1)
+determine_question_type(CanonicalAnswer, 1) :- 
+  number(CanonicalAnswer). 
+
+% default word based question (gives path 0)
+determine_question_type(_, 0). 
+
+% build_hint/3
+build_hint(_, 0, 0) :-
+  writeln(""). 
+
+% build_hint/3
+% This prints out the letters that are hidden as "_". This is called once NumTries reaches 0. 
+build_hint([Head | Rest], Length, 0) :- 
+  write("_ "), 
+  LettersLeft is Length - 1, 
+  build_hint(Rest, LettersLeft, 0). 
+
+% build_hint/3
+% This prints out the letters that should be given as hints. This is called whenever NumTries is > 0. 
+build_hint([Head | Rest], Length, NumTries) :- 
+  write(Head),
+  write(" "),  
+  LettersLeft is Length - 1, 
+  TriesLeft is NumTries - 1, 
+  build_hint(Rest, LettersLeft, TriesLeft). 
+
+% give_hint(CanonicalAnswer, NumTries)
+give_hint(CanonicalAnswer, NumTries) :-
+  string_length(CanonicalAnswer, Length), 
+  string_chars(CanonicalAnswer, Chars), 
+  write("HINT: "), 
+  build_hint(Chars, Length, NumTries),
+  writeln(""). 
+
+
+% give_hint(CanonicalAnswer, NumChances, NumTries, CurrentHint, NewHint) :- 
+% string_length(CanonicalAnswer, Length)
+%   CurrentHint
+
+% text_score_answer(_, CanonicalAnswer, _, _, 0) :-
+%   format("The answer was ~w \n", [CanonicalAnswer]).
+% text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1, 3).
+
+text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, NumChances, 1, NumTries) :-
+  AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
+  % First convert input and accepted answers to lowercase so that matches are case insensitive
+  string_lower(UserAnswer, NormalizedUserAnswer),
+  maplist(string_lower, AcceptableAnswers, NormalizedAcceptableAnswers),
+  \+ member(NormalizedUserAnswer, NormalizedAcceptableAnswers).
+
+text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, NumChances, 2, _) :-
+  AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
+  % First convert input and accepted answers to lowercase so that matches are case insensitive
+  string_lower(UserAnswer, NormalizedUserAnswer),
+  maplist(string_lower, AcceptableAnswers, NormalizedAcceptableAnswers),
+  member(NormalizedUserAnswer, NormalizedAcceptableAnswers).
+
+check_num_tries(2, 1, 1). 
+check_num_tries(_, _, 0). 
+
+% loop_current_question(Row, NumChances) 
+loop_current_question(Row, _, _, -1, 0, _, _) :- 
+  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+  writeln("Out of Chances!"),
+  format("The (canonical) answer was ~w \n", [RHSLabel]).
+
+% loop_current_question(Row, FormatString, CurrentScore, _, 0, 3) :-
+%   Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+%   writeln("Out of Chances!"),
+%   format("The (canonical) answer was ~w \n", [RHSLabel]).
+
+% Number of Hints = StartingNumChances - 1
+% if answer is found, FoundAnswer = 2, else if wrong FoundAnswer = 1
+loop_current_question(Row, FormatString, CurrentScore, NumChances, FinalScore, MaxChances, 1) :-
+  % Format the question (in a topic specific FormatString) and print it
+  % (LHSLabel is the thing we're asking about, and RHSLabel + RHSAltLabel are the expected answers)
+  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+  format(atom(Question), FormatString, [LHSLabel]), 
+  writeln(""), 
+  write(Question),
+  NumTries is MaxChances - NumChances, 
+  % Tells player the number of chances they have left before they lose all the points for this question
+  format(" Number of Chances Left: ~d\n", NumChances),
+  give_hint(RHSLabel, NumTries),
+  read_line_to_string(user_input, UserAnswer),
+  text_score_answer(UserAnswer, RHSLabel, RHSAltLabels, NumChances, FoundAnswer, NumTries), 
+  check_num_tries(NumTries, FoundAnswer, Offset), 
+  RemainingChances is NumChances - 1 - Offset,
+  NewScore is CurrentScore / 2, 
+  loop_current_question(Row, FormatString, NewScore, RemainingChances, FinalScore, MaxChances, FoundAnswer). 
+
+loop_current_question(Row, FormatString, CurrentScore, _, FinalScore, _, 2) :-
+  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+  FinalScore is CurrentScore * 2, 
+  writeln("Good Work! "),
+  format("The (canonical) answer was ~w \n", [RHSLabel]).
+
+% ask_and_score()
+ask_and_score(_, _, _, 0, Score, MaxPossibleScore, _, _) :-
+  format("\nYour final score is: ~2f/~d!\n", [Score, MaxPossibleScore]).
+
+% for text based questions
+ask_and_score(AllRows, Row, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange, 0) :-
+  % start loop to give players a chance to answer with a couple given hints
+  loop_current_question(Row, FormatString, 1, 3, Score, 3, 1),
+  % Add to the score and print it
+  NewScore is CurrentScore + Score,
+  format("Your score so far is: ~2f/~d\n", [NewScore, MaxPossibleScore]),
+
+  % Decrement the RemainingQuestions counter and recurse
+  NewRemainingQuestions is RemainingQuestions - 1,
+  grab_questions(AllRows, FormatString, NewRemainingQuestions, NewScore, MaxPossibleScore, ScoringRange).
+
+% for number based questions
+ask_and_score(AllRows, Row, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange, 1) :-
+  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+  % Format the question (in a topic specific FormatString) and print it
+  % (LHSLabel is the thing we're asking about, and RHSLabel + RHSAltLabel are the expected answers)
+  format(atom(Question), FormatString, [LHSLabel]),
+  writeln(""),
+  writeln(Question),
+
+  % Then read a user answer and compute a score for it
+  read_line_to_string(user_input, UserAnswer),
+  score_answer(UserAnswer, RHSLabel, RHSAltLabels, Score, ScoringRange),
+
+  % Add to the score and print it
+  NewScore is CurrentScore + Score,
+  format("Your score so far is: ~2f/~d\n", [NewScore, MaxPossibleScore]),
+
+  % Decrement the RemainingQuestions counter and recurse
+  NewRemainingQuestions is RemainingQuestions - 1,
+  grab_questions(AllRows, FormatString, NewRemainingQuestions, NewScore, MaxPossibleScore, ScoringRange).
+
+grab_questions(AllRows, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange) :-
+   % Choose a random row from the list and unwrap it into the required bits
+  random_member(Row, AllRows),
+  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+  determine_question_type(RHSLabel, Type), 
+  ask_and_score(AllRows, Row, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange, Type). 
 
 % score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, Score) takes in a user's answer to a question and compares
 % it case-insensitively to a list of canonical and alternative (accepted) answers, producing a positive Score
@@ -46,9 +188,9 @@ score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1, _) :-
   string_lower(UserAnswer, NormalizedUserAnswer),
   maplist(string_lower, AcceptableAnswers, NormalizedAcceptableAnswers),
 
-  member(NormalizedUserAnswer, NormalizedAcceptableAnswers),
+  member(NormalizedUserAnswer, NormalizedAcceptableAnswers).
 
-  format("Correct! The (canonical) answer was ~w \n", [CanonicalAnswer]).
+  % format("Correct! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
 % score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, Score, ScoringRange) takes in one additional argument,
 % ScoringRange, and uses that to give part scores to answers that are reasonably close to the actual answer using the following
@@ -121,7 +263,7 @@ load_topic_questions(TopicFilename, OutputRows) :-
 play_topic(quiz_topic(TopicFilename, TopicDescription, FormatString), RemainingQuestions, ScoringRange) :-
   format("Playing topic: ~w\n", [TopicDescription]),
   load_topic_questions(TopicFilename, AllRows),
-  ask_and_score_questions(AllRows, FormatString, RemainingQuestions, 0, RemainingQuestions, ScoringRange).
+  grab_questions(AllRows, FormatString, RemainingQuestions, 0, RemainingQuestions, ScoringRange).
 
 % parse_or_prompt_topic/3 generates a quiz topic from user input, or
 % calls choose_topic if no query file is passed in from the CLI args
