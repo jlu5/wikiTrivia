@@ -94,7 +94,6 @@ give_hint(CanonicalAnswer, NumTries) :-
   write("HINT: "), 
   build_hint(Chars, Length, NumTries).
 
-
 % text_score_answer/6 
 % This path is indicated as 1 in index parameter 5. This path is in the case where the player guesses a wrong answer. 
 text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1, NumTries) :-
