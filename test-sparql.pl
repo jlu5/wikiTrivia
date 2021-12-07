@@ -23,10 +23,16 @@ test('parse_label_list success - single item', [nondet]) :-
   parse_label_list(literal(lang(en, "Hello world")), ["Hello world"]).
 test('parse_label_list success - multiple items', [nondet]) :-
   parse_label_list(literal(lang(en, "A, B, C d e, f")), ["A", "B", "C d e", "f"]).
+test('parse_label_list success - untranslated string literal', [nondet]) :-
+  parse_label_list(literal("Canada, CA, ca, United States of America, United States, US, USA"),
+  ["Canada", "CA", "ca", "United States of America", "United States", "US", "USA"]).
+test('parse_label_list success - untranslated atom literal', [nondet]) :-
+  parse_label_list(literal('Canada, CA, ca, United States of America, United States, US, USA'),
+  ["Canada", "CA", "ca", "United States of America", "United States", "US", "USA"]).
 test('parse_label_list success - null', [nondet]) :-
   parse_label_list('$null$', []).
-test('parse_label_list fail - bare literal', [fail]) :-
-  parse_label_list(literal('2000-01-01T00:00:00Z'), _).
+test('parse_label_list fail - single element literal', [nondet]) :-
+  parse_label_list(literal('2000-01-01T00:00:00Z'), ["2000-01-01T00:00:00Z"]).
 test('parse_label_list fail - mismatched output', [fail]) :-
   parse_label_list(literal(lang(en, "A, B, C d e, f g")), []).
 

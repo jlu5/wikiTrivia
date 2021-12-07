@@ -7,6 +7,8 @@ WHERE
   ?elevationStatement psv:P2044 ?elevation.
   ?elevation wikibase:quantityAmount ?elevationAmt.
   ?elevation wikibase:quantityUnit ?elevationUnit.
+  # Exclude historical countries
+  FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3024240. })
 
   # Some values are given in feet - convert them to metres!
   OPTIONAL {
