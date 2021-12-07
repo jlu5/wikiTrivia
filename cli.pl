@@ -55,7 +55,7 @@ build_hint(_, 0, 0) :-
 
 % build_hint/3
 % This prints out the letters that are hidden as "_". This is called once NumTries reaches 0. 
-build_hint([Head | Rest], Length, 0) :- 
+build_hint([_ | Rest], Length, 0) :- 
   write("_ "), 
   LettersLeft is Length - 1, 
   build_hint(Rest, LettersLeft, 0). 
@@ -69,7 +69,9 @@ build_hint([Head | Rest], Length, NumTries) :-
   TriesLeft is NumTries - 1, 
   build_hint(Rest, LettersLeft, TriesLeft). 
 
-% give_hint(CanonicalAnswer, NumTries)
+% give_hint/2
+% when called gives hint and breaks up CanonicalAnswer into a char list
+% NumTries Indicates the number of attempts the user has done as a guess, and is used to see how much of the letter should be revealed. 
 give_hint(CanonicalAnswer, NumTries) :-
   string_length(CanonicalAnswer, Length), 
   string_chars(CanonicalAnswer, Chars), 
@@ -77,45 +79,40 @@ give_hint(CanonicalAnswer, NumTries) :-
   build_hint(Chars, Length, NumTries),
   writeln(""). 
 
-
-% give_hint(CanonicalAnswer, NumChances, NumTries, CurrentHint, NewHint) :- 
-% string_length(CanonicalAnswer, Length)
-%   CurrentHint
-
-% text_score_answer(_, CanonicalAnswer, _, _, 0) :-
-%   format("The answer was ~w \n", [CanonicalAnswer]).
-% text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1, 3).
-
-text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, NumChances, 1, NumTries) :-
+% text_score_answer/6 
+% This path is indicated as 1 in index parameter 5. This path is in the case where the player guesses a wrong answer. 
+text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1) :-
   AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
   % First convert input and accepted answers to lowercase so that matches are case insensitive
   string_lower(UserAnswer, NormalizedUserAnswer),
   maplist(string_lower, AcceptableAnswers, NormalizedAcceptableAnswers),
   \+ member(NormalizedUserAnswer, NormalizedAcceptableAnswers).
 
-text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, NumChances, 2, _) :-
+% text_score_answer/6 
+% This path is indicated as 1 in index parameter 5. This path is in the case where the player guesses the right answer. 
+text_score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 2) :-
   AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
   % First convert input and accepted answers to lowercase so that matches are case insensitive
   string_lower(UserAnswer, NormalizedUserAnswer),
   maplist(string_lower, AcceptableAnswers, NormalizedAcceptableAnswers),
   member(NormalizedUserAnswer, NormalizedAcceptableAnswers).
 
+% a bound checker for comparing NumTries and Current Path of Loop Current
+% if the current NumTries is 2 and Current Path is 1 (Wrong) then apply offset 1
 check_num_tries(2, 1, 1). 
 check_num_tries(_, _, 0). 
 
-% loop_current_question(Row, NumChances) 
+% loop_current_question/7
+% Default case when the player should run out of Chances
 loop_current_question(Row, _, _, -1, 0, _, _) :- 
-  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+  Row = [_, _, _, RHSLabel, _],
   writeln("Out of Chances!"),
   format("The (canonical) answer was ~w \n", [RHSLabel]).
 
-% loop_current_question(Row, FormatString, CurrentScore, _, 0, 3) :-
-%   Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
-%   writeln("Out of Chances!"),
-%   format("The (canonical) answer was ~w \n", [RHSLabel]).
-
+% loop_current_question/7
 % Number of Hints = StartingNumChances - 1
 % if answer is found, FoundAnswer = 2, else if wrong FoundAnswer = 1
+% FinalScore determines the score to be given back for the current question. 
 loop_current_question(Row, FormatString, CurrentScore, NumChances, FinalScore, MaxChances, 1) :-
   % Format the question (in a topic specific FormatString) and print it
   % (LHSLabel is the thing we're asking about, and RHSLabel + RHSAltLabel are the expected answers)
@@ -128,25 +125,29 @@ loop_current_question(Row, FormatString, CurrentScore, NumChances, FinalScore, M
   format(" Number of Chances Left: ~d\n", NumChances),
   give_hint(RHSLabel, NumTries),
   read_line_to_string(user_input, UserAnswer),
-  text_score_answer(UserAnswer, RHSLabel, RHSAltLabels, NumChances, FoundAnswer, NumTries), 
+  text_score_answer(UserAnswer, RHSLabel, RHSAltLabels, FoundAnswer), 
+  % offsets for recursion
   check_num_tries(NumTries, FoundAnswer, Offset), 
   RemainingChances is NumChances - 1 - Offset,
   NewScore is CurrentScore / 2, 
   loop_current_question(Row, FormatString, NewScore, RemainingChances, FinalScore, MaxChances, FoundAnswer). 
 
-loop_current_question(Row, FormatString, CurrentScore, _, FinalScore, _, 2) :-
-  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+loop_current_question(Row, _, CurrentScore, _, FinalScore, _, 2) :-
+  Row = [_, _, _, RHSLabel, _],
   FinalScore is CurrentScore * 2, 
   writeln("Good Work! "),
   format("The (canonical) answer was ~w \n", [RHSLabel]).
 
-% ask_and_score()
+% ask_and_score/8
+% prints out final score after the game is finished
 ask_and_score(_, _, _, 0, Score, MaxPossibleScore, _, _) :-
   format("\nYour final score is: ~2f/~d!\n", [Score, MaxPossibleScore]).
 
 % for text based questions
+% Path 0 (Index 7) for the 3 Chances loop 
 ask_and_score(AllRows, Row, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange, 0) :-
   % start loop to give players a chance to answer with a couple given hints
+  % Row, FormatString, CurrentScore = 1 (Max possible points), NumChances = 3, Score is given back, MaxChances = 3, 1 (Starting Path)
   loop_current_question(Row, FormatString, 1, 3, Score, 3, 1),
   % Add to the score and print it
   NewScore is CurrentScore + Score,
@@ -157,6 +158,7 @@ ask_and_score(AllRows, Row, FormatString, RemainingQuestions, CurrentScore, MaxP
   grab_questions(AllRows, FormatString, NewRemainingQuestions, NewScore, MaxPossibleScore, ScoringRange).
 
 % for number based questions
+% Path 1 (Index 7) for Questions With Scoring Range 
 ask_and_score(AllRows, Row, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange, 1) :-
   Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
   % Format the question (in a topic specific FormatString) and print it
@@ -177,25 +179,15 @@ ask_and_score(AllRows, Row, FormatString, RemainingQuestions, CurrentScore, MaxP
   NewRemainingQuestions is RemainingQuestions - 1,
   grab_questions(AllRows, FormatString, NewRemainingQuestions, NewScore, MaxPossibleScore, ScoringRange).
 
+% grab_questions/6
+% Choose a random question from AllRows. 
+% Depending on Type, the call to ask_and_score is decided. 
 grab_questions(AllRows, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange) :-
    % Choose a random row from the list and unwrap it into the required bits
   random_member(Row, AllRows),
-  Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
+  Row = [_, _, _, RHSLabel, _],
   determine_question_type(RHSLabel, Type), 
   ask_and_score(AllRows, Row, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange, Type). 
-
-% score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, Score) takes in a user's answer to a question and compares
-% it case-insensitively to a list of canonical and alternative (accepted) answers, producing a positive Score
-% if the answer is correct and 0 otherwise
-score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1, _) :-
-  AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
-  % First convert input and accepted answers to lowercase so that matches are case insensitive
-  string_lower(UserAnswer, NormalizedUserAnswer),
-  maplist(string_lower, AcceptableAnswers, NormalizedAcceptableAnswers),
-
-  member(NormalizedUserAnswer, NormalizedAcceptableAnswers).
-
-  % format("Correct! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
 % score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, Score, ScoringRange) takes in one additional argument,
 % ScoringRange, and uses that to give part scores to answers that are reasonably close to the actual answer using the following
@@ -219,7 +211,7 @@ score_answer(_, CanonicalAnswer, _, 0, _) :-
   format("Incorrect! The answer was ~w \n", [CanonicalAnswer]).
 
 
-% ask_and_score_questions/5 takes in a list of all rows for a quiz topic, the question format string, and the current score:
+% ask_and_score_questions/6 takes in a list of all rows for a quiz topic, the question format string, and the current score:
 % It asks the user a question based off a random row, computes a further score, and repeats with further questions until RemainingQuestions becomes 0.
 % MaxPossibleScore is currently the number of questions, but htis may change later
 ask_and_score_questions(_, _, 0, Score, MaxPossibleScore, _) :-
