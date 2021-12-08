@@ -1,6 +1,6 @@
 #!/usr/bin/env swipl
 
-% :- initialization(main, main).
+:- initialization(main, main).
 
 :- use_module(library(readutil)).
 :- ensure_loaded("cli.pl").

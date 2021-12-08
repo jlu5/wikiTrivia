@@ -20,16 +20,15 @@ known_topics([
   quiz_topic("queries/inception-oses-programming-langs.rq", "Birth years of programming langs and operating systems", "When was ~w created?")
 ]).
 
-%%%
 
-% print_known_topics(QuizTopics, CurrentIndex) prints each quiz topic's name, starting at (one based) CurrentIndex
+% print_known_topics/2 prints each quiz topic's name, starting at (one based) CurrentIndex
 % and continuing until the list of quiz topics is empty
 print_known_topics([], _).
 print_known_topics([quiz_topic(_Filename, TopicName, _FormatString)|Rest], CurrentIndex) :-
   write(CurrentIndex), write(". "), writeln(TopicName),
   NewIndex is CurrentIndex + 1, print_known_topics(Rest, NewIndex).
 
-% choose_topic(QuizTopic) prompts for user input and produces the quiz_topic instance chosen by the user
+% choose_topic/1 prompts for user input and produces the quiz_topic instance chosen by the user
 choose_topic(QuizTopic) :-
   known_topics(AllTopics),
   length(AllTopics, NumTopics),
@@ -48,35 +47,33 @@ member_case_insensitive(Input, List) :-
   maplist(string_lower, List, NormalizedList),
   member(NormalizedInput, NormalizedList).
 
-% score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, ScoringRange, Score) takes in a user's answer to a question and compares
-% it case-insensitively to a list of canonical and alternative (accepted) answers, producing a positive Score
-% if the answer is correct and 0 otherwise
+% score_answer/6 takes in a user response, the correct answers to a question, as well as the scoring range for numerical
+% answer questions and the number of attempts remaining for text answer questions (to support hinting)
+% It pproduces a positive Score if the answer is correct and 0 otherwise
+% This case handles string and number answers by checking if the answer (case-insensitively) matches an accepted solution
 score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, _, Score) :-
-  %AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
-  %format("DBG score_answer AcceptableAnswers=~w text correct case, Score=~w\n", [AcceptableAnswers, Score]),
   member_case_insensitive(UserAnswer, [CanonicalAnswer|AlternativeAnswers]),
   Score = 1,
-
   format("Correct! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
-% score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, Score, ScoringRange) takes in one additional argument,
-% ScoringRange, and uses that to give part scores to answers that are reasonably close to the actual answer using the following
-% formula: Score = max(0, 1- abs(SubmittedAnswer - RealAnswer) / ScoringRange)
+% These two cases compute scores for numerical answers. We give part scores to answers less than ScoringRange away from the real answer,
+% using the formula: Score = max(0, 1 - abs(SubmittedAnswer - RealAnswer) / ScoringRange)
+% Numerical answer questions do not use hints, so this prints the response in all cases
 score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, _, 0) :-
   atom_number(UserAnswer, NumUserAnswer),
   number(CanonicalAnswer),
   Diff is abs(NumUserAnswer - CanonicalAnswer),
   Diff >= ScoringRange,
   format("You were off by over ~w! The answer was ~w \n", [ScoringRange, CanonicalAnswer]).
-
 score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, _, Score) :-
   atom_number(UserAnswer, NumUserAnswer),
   number(CanonicalAnswer),
   Diff is abs(NumUserAnswer - CanonicalAnswer),
   Diff < ScoringRange,
   Score is max(0, 1 - Diff / ScoringRange),
-  format("Close! The (canonical) answer was ~w \n", [CanonicalAnswer]).
+  format("Close! The correct answer was ~w \n", [CanonicalAnswer]).
 
+% Incorrect cases. When NumAttemptsRemaining > 0 for text questions, this does not show the correct answer
 score_answer(_, CanonicalAnswer, _, _, NumAttemptsRemaining, 0) :-
   NumAttemptsRemaining > 0,
   format("Incorrect! Try Again! \n"),
@@ -88,11 +85,12 @@ score_answer(_, CanonicalAnswer, _, _, 0, 0) :-
 % For text questions, loop IFF the answer is incorrect and NumAttemptsRemaining > 1
 get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore) :-
   NumAttemptsRemaining > 1,
-  \+ number(RHSLabel),
+  \+ number(RHSLabel),  % Filter out numerical answer questions
   read_line_to_string(user_input, UserAnswer),
   NewNumAttemptsRemaining is NumAttemptsRemaining - 1,
-  % ( condition -> then_clause ; else_clause )
   score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NewNumAttemptsRemaining, ScoreTemp),
+  % This is a strange case where unifying with score_answer(UserAnswer, ..., 0) does not work, because it'll
+  % automatically unify with one of the incorrect cases, even if the answer is correct..
   (
     ScoreTemp = 0 ->
       get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NewNumAttemptsRemaining, FinalQuestionScore) ;
@@ -104,24 +102,21 @@ get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, Fina
   NewNumAttemptsRemaining is NumAttemptsRemaining - 1,
   score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NewNumAttemptsRemaining, FinalQuestionScore).
 
-
 % ask_and_score_questions/5 takes in a list of all rows for a quiz topic, the question format string, and the current score:
-% It asks the user a question based off a random row, computes a further score, and repeats with further questions until RemainingQuestions becomes 0.
-% MaxPossibleScore is currently the number of questions, but htis may change later
+% It asks the user a question based off a random row, computes a score so far, and repeats with further questions until RemainingQuestions becomes 0.
+% MaxPossibleScore is currently equal to total the number of questions
 ask_and_score_questions(_, _, 0, Score, MaxPossibleScore, _) :-
   format("Your final score is: ~2f/~d!\n", [Score, MaxPossibleScore]).
 ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore, MaxPossibleScore, ScoringRange) :-
   % Choose a random row from the list and unwrap it into the required bits
   random_member(Row, AllRows),
   Row = [_, LHSLabel, _, RHSLabel, RHSAltLabels],
-  % Format the question (in a topic specific FormatString) and print it
-  % (LHSLabel is the thing we're asking about, and RHSLabel + RHSAltLabel are the expected answers)
+  % Format the question in a topic-specific FormatString and print it
+  % LHSLabel is the thing we're asking about, and RHSLabel + RHSAltLabels are the expected answers
   format(atom(Question), FormatString, [LHSLabel]),
   writeln(""),
   writeln(Question),
 
-  % Then read a user answer and compute a score for it. Currently, the score for each question is simply 1 if the
-  % answer is correct and 0 otherwise
   get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, 3, FinalQuestionScore),
 
   % Add to the score and print it
@@ -149,7 +144,8 @@ load_topic_questions(TopicFilename, OutputRows) :-
         error(Err, _Context),
         log_cache_error(save, TopicFilename, Err)).
 
-% play_topic/1 takes in a quiz topic, loads data rows from Wikiedata, and starts the game
+% play_topic/3 takes in a quiz topic, # of remaining questions, and scoring range
+% It loads data entries from either Wikidata or the query cache, and starts the game
 play_topic(quiz_topic(TopicFilename, TopicDescription, FormatString), RemainingQuestions, ScoringRange) :-
   format("Playing topic: ~w\n", [TopicDescription]),
   load_topic_questions(TopicFilename, AllRows),
