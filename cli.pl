@@ -49,16 +49,17 @@ member_case_insensitive(Input, List) :-
 
 % score_answer/6 takes in a user response, the correct answers to a question, as well as the scoring range for numerical
 % answer questions and the number of attempts remaining for text answer questions (to support hinting)
-% It pproduces a positive Score if the answer is correct and 0 otherwise
+% It produces a positive Score if the answer is correct and 0 otherwise
 % This case handles string and number answers by checking if the answer (case-insensitively) matches an accepted solution
-score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, _, Score) :-
+score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, NumAttemptsRemaining, Score) :-
   member_case_insensitive(UserAnswer, [CanonicalAnswer|AlternativeAnswers]),
-  Score = 1,
+  max_chances(MaxAttempts),
+  Score = 1 / (MaxAttempts - NumAttemptsRemaining),
   format("Correct! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
 % These two cases compute scores for numerical answers. We give part scores to answers less than ScoringRange away from the real answer,
 % using the formula: Score = max(0, 1 - abs(SubmittedAnswer - RealAnswer) / ScoringRange)
-% Numerical answer questions do not use hints, so this prints the response in all cases
+% Numerical answer questions do not use hints, so this prints the actual answer in all cases
 score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, _, 0) :-
   atom_number(UserAnswer, NumUserAnswer),
   number(CanonicalAnswer),
@@ -117,7 +118,8 @@ ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore,
   writeln(""),
   writeln(Question),
 
-  get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, 3, FinalQuestionScore),
+  max_chances(MaxAttempts),
+  get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, MaxAttempts, FinalQuestionScore),
 
   % Add to the score and print it
   NewScore is CurrentScore + FinalQuestionScore,
