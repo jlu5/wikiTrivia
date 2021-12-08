@@ -34,22 +34,58 @@ test('ask_and_score_questions successful output with final score 0', Output == '
 test('ask_and_score_questions successful output with final score 3', Output == 'Your final score is: 3.00/5!\n') :-
   with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 3, 5, _)).
 
+test('ask_and_score_questions successful output with decimal value possible score', Output == 'Your final score is: 3.75/5!\n') :-
+  with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 3.75, 5, _)).
+
 test('ask_and_score_questions successful output with max possible score', Output == 'Your final score is: 5.00/5!\n') :-
   with_output_to(atom(Output), ask_and_score_questions(_, _, 0, 5, 5, _)).
 
-test('score_answer successful non-numerical canonical answer', Output == 'Correct! The (canonical) answer was Africa \n') :-
-  with_output_to(atom(Output), score_answer("Africa", "Africa", _, 1, _)).
+test('score_answer fail non-numerical canonical answer', [fail]) :-
+  with_output_to(atom(_), score_answer("Afreeca", "Africa", ["Africa"], _, 2, 1)).
 
-test('score_answer successful non-numerical alt answer', Output == 'Correct! The (canonical) answer was Africa \n') :-
-  with_output_to(atom(Output), score_answer("af", "Africa", ["af", "nasd"], 1, _)).
+test('score_answer fail non-numerical alt answer', [fail]) :-
+  with_output_to(atom(_), score_answer("af", "Africa", ["afd", "nasd"], _, 2, 1)).
 
-test('score_answer successful numerical canonical answer', Output == 'Correct! The (canonical) answer was 11 \n') :-
-  with_output_to(atom(Output), score_answer("11", "11", _, 1, _)).
+test('score_answer exact numerical canonical answer', Output == 'Close! The correct answer was 2000 \n') :-
+  with_output_to(atom(Output), score_answer('2000', 2000, [2000], 20, _, 1)).
 
 test('score_answer not close numerical canonical answer', Output == 'You were off by over 20! The answer was 2000 \n') :-
-  with_output_to(atom(Output), score_answer('0', 2000, _, 0, 20)).
+  with_output_to(atom(Output), score_answer('0', 2000, [2000], 20, _, 0)).
 
-test('score_answer close numerical canonical answer', Output == 'Close! The (canonical) answer was 2000 \n') :-
-  with_output_to(atom(Output), score_answer('1990', 2000, _, 0.5, 20)).
+test('score_answer close numerical canonical answer', Output == 'Close! The correct answer was 2000 \n') :-
+  with_output_to(atom(Output), score_answer('1990', 2000, [2000], 20, _, 0.5)).
+
 
 :- end_tests('ask_and_score_questions').
+
+:- begin_tests('give_hint'). 
+
+test('give empty lines hint single letter', Output == 'HINT: _ \n') :-
+  with_output_to(atom(Output), give_hint("H", 2)).
+
+test('give first letter hint single letter', Output == 'HINT: H \n') :-
+  with_output_to(atom(Output), give_hint("H", 1)).
+
+test('give empty lines hint', Output == 'HINT: _ _ _ _ _ \n') :-
+  with_output_to(atom(Output), give_hint("Hello", 2)).
+
+test('give first letter hint', Output == 'HINT: H _ _ _ _ \n') :-
+  with_output_to(atom(Output), give_hint("Hello", 1)).
+
+:- end_tests('give_hint').
+
+:- begin_tests('member_case_insensitive'). 
+
+test('member_case_insensitive member in list', [nondet]) :-
+  member_case_insensitive("Hello", ["Hello", "asldkaksd"]).
+
+test('member_case_insensitive member not in list', [fail]) :-
+  member_case_insensitive("Hell", ["Hello", "asldkaksd"]).
+
+test('member_case_insensitive member in list lower case', [nondet]) :-
+  member_case_insensitive("hello", ["Hello", "asldkaksd", "tmkrmijirfgj"]).
+
+test('member_case_insensitive member not in list lower case', [fail]) :-
+  member_case_insensitive("hsad", ["Hello", "asldkaksd", "tmkrmijirfgj"]).
+
+:- end_tests('member_case_insensitive'). 
