@@ -1,6 +1,7 @@
 :- use_module(library(readutil)).
 :- use_module(library(semweb/sparql_client)).
 :- use_module(library(date)).
+:- use_module(library(pcre)).
 
 % Returns raw rows for a SPARQL query given a filename to load the query from
 % e.g. get_rows_from_query_file("queries/capitals-to-countries.rq", Row)
