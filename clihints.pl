@@ -26,11 +26,11 @@ build_hint(_, 0, 0) :-
     TriesLeft is NumTries - 1,
     build_hint(Rest, LettersLeft, TriesLeft).
 
-  % give_hint/2
-  % default case when max_chances is used
-  give_hint(_, NumTries) :-
-    ChancesUsed is NumTries + 1,
-    max_chances(ChancesUsed).
+  % % give_hint/2
+  % % default case when max_chances is used
+  % give_hint(_, NumTries) :-
+  %   ChancesUsed is NumTries + 1,
+  %   max_chances(ChancesUsed).
 
   % give_hint/2
   % when called gives hint and breaks up CanonicalAnswer into a char list

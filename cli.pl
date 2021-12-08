@@ -79,7 +79,7 @@ score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, _, Score) :-
 
 score_answer(_, CanonicalAnswer, _, _, NumAttempsRemaining, 0) :-
   (
-    NumAttempsRemaining = 0 -> 
+    NumAttempsRemaining = 0 ->  
       format("Incorrect! Try Again! \n"); 
       format("Incorrect! The answer was ~w \n", [CanonicalAnswer]) 
   ).
