@@ -1,5 +1,6 @@
 
 :- ensure_loaded("cliopts.pl").
+:- ensure_loaded("clihints.pl").
 :- ensure_loaded("sparql.pl").
 :- ensure_loaded("querycache.pl").
 
@@ -41,31 +42,36 @@ choose_topic(QuizTopic) :-
   writeln("Invalid input"),
   choose_topic(QuizTopic).
 
+% member_case_insensitive/3 is true if Input is in List after case normalizing both arguments
+member_case_insensitive(Input, List) :-
+  string_lower(Input, NormalizedInput),
+  maplist(string_lower, List, NormalizedList),
+  member(NormalizedInput, NormalizedList).
 
-% score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, Score) takes in a user's answer to a question and compares
+% score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, ScoringRange, Score) takes in a user's answer to a question and compares
 % it case-insensitively to a list of canonical and alternative (accepted) answers, producing a positive Score
 % if the answer is correct and 0 otherwise
-score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, 1, _) :-
-  AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
-  % First convert input and accepted answers to lowercase so that matches are case insensitive
-  string_lower(UserAnswer, NormalizedUserAnswer),
-  maplist(string_lower, AcceptableAnswers, NormalizedAcceptableAnswers),
-
-  member(NormalizedUserAnswer, NormalizedAcceptableAnswers),
+score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, Score) :-
+  %AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
+  %format("DBG score_answer AcceptableAnswers=~w text correct case, Score=~w\n", [AcceptableAnswers, Score]),
+  member_case_insensitive(UserAnswer, [CanonicalAnswer|AlternativeAnswers]),
+  Score = 1,
 
   format("Correct! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
 % score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, Score, ScoringRange) takes in one additional argument,
 % ScoringRange, and uses that to give part scores to answers that are reasonably close to the actual answer using the following
 % formula: Score = max(0, 1- abs(SubmittedAnswer - RealAnswer) / ScoringRange)
-score_answer(UserAnswer, CanonicalAnswer, _, 0, ScoringRange) :-
+score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, 0) :-
+  format("DBG score_answernumber out of range case\n"),
   atom_number(UserAnswer, NumUserAnswer),
   number(CanonicalAnswer),
   Diff is abs(NumUserAnswer - CanonicalAnswer),
   Diff >= ScoringRange,
   format("You were off by over ~w! The answer was ~w \n", [ScoringRange, CanonicalAnswer]).
 
-score_answer(UserAnswer, CanonicalAnswer, _, Score, ScoringRange) :-
+score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, Score) :-
+  format("DBG score_answernumber in range case\n"),
   atom_number(UserAnswer, NumUserAnswer),
   number(CanonicalAnswer),
   Diff is abs(NumUserAnswer - CanonicalAnswer),
@@ -73,8 +79,30 @@ score_answer(UserAnswer, CanonicalAnswer, _, Score, ScoringRange) :-
   Score is max(0, 1 - Diff / ScoringRange),
   format("Close! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
-score_answer(_, CanonicalAnswer, _, 0, _) :-
+score_answer(_, CanonicalAnswer, _, _, 0) :-
   format("Incorrect! The answer was ~w \n", [CanonicalAnswer]).
+
+% For text questions, loop IFF the answer is incorrect and NumAttemptsRemaining > 1
+get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore) :-
+  NumAttemptsRemaining > 1,
+  \+ number(RHSLabel),
+  read_line_to_string(user_input, UserAnswer),
+  NewNumAttemptsRemaining is NumAttemptsRemaining - 1,
+  format("Checking if answer got score 0, NewNumAttemptsRemaining = ~w\n", [NewNumAttemptsRemaining]),
+  % ( condition -> then_clause ; else_clause )
+  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, ScoreTemp),
+  (
+    ScoreTemp = 0 ->
+      get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NewNumAttemptsRemaining, FinalQuestionScore) ;
+      FinalQuestionScore = ScoreTemp
+  ).
+% Otherwise, take the next answer's score as the final score for this question
+get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, _, FinalQuestionScore) :-
+  read_line_to_string(user_input, UserAnswer),
+  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, FinalQuestionScore).
+
+
+% For text answers, we allow them to retry as long as NumAttemptsRemaining is not 0
 
 
 % ask_and_score_questions/5 takes in a list of all rows for a quiz topic, the question format string, and the current score:
@@ -94,11 +122,10 @@ ask_and_score_questions(AllRows, FormatString, RemainingQuestions, CurrentScore,
 
   % Then read a user answer and compute a score for it. Currently, the score for each question is simply 1 if the
   % answer is correct and 0 otherwise
-  read_line_to_string(user_input, UserAnswer),
-  score_answer(UserAnswer, RHSLabel, RHSAltLabels, Score, ScoringRange),
+  get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, 3, FinalQuestionScore),
 
   % Add to the score and print it
-  NewScore is CurrentScore + Score,
+  NewScore is CurrentScore + FinalQuestionScore,
   format("Your score so far is: ~2f/~d\n", [NewScore, MaxPossibleScore]),
 
   % Decrement the RemainingQuestions counter and recurse
