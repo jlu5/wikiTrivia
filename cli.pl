@@ -51,7 +51,7 @@ member_case_insensitive(Input, List) :-
 % score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, ScoringRange, Score) takes in a user's answer to a question and compares
 % it case-insensitively to a list of canonical and alternative (accepted) answers, producing a positive Score
 % if the answer is correct and 0 otherwise
-score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, NumAttempsRemaining, Score) :-
+score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, _, Score) :-
   %AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
   %format("DBG score_answer AcceptableAnswers=~w text correct case, Score=~w\n", [AcceptableAnswers, Score]),
   member_case_insensitive(UserAnswer, [CanonicalAnswer|AlternativeAnswers]),
@@ -78,12 +78,12 @@ score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, _, Score) :-
   format("Close! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
 score_answer(_, CanonicalAnswer, _, _, NumAttemptsRemaining, 0) :-
-  NumAttemptsRemaining > 0, 
-  format("Incorrect! Try Again! \n"), 
-  give_hint(CanonicalAnswer, NumAttemptsRemaining). 
+  NumAttemptsRemaining > 0,
+  format("Incorrect! Try Again! \n"),
+  give_hint(CanonicalAnswer, NumAttemptsRemaining).
 
 score_answer(_, CanonicalAnswer, _, _, 0, 0) :-
-  format("Incorrect! The answer was ~w \n", [CanonicalAnswer]). 
+  format("Incorrect! The answer was ~w \n", [CanonicalAnswer]).
 
 % For text questions, loop IFF the answer is incorrect and NumAttemptsRemaining > 1
 get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore) :-
@@ -101,10 +101,8 @@ get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, Fina
 % Otherwise, take the next answer's score as the final score for this question
 get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore) :-
   read_line_to_string(user_input, UserAnswer),
-  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore).
-
-
-% For text answers, we allow them to retry as long as NumAttemptsRemaining is not 0
+  NewNumAttemptsRemaining is NumAttemptsRemaining - 1,
+  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NewNumAttemptsRemaining, FinalQuestionScore).
 
 
 % ask_and_score_questions/5 takes in a list of all rows for a quiz topic, the question format string, and the current score:
