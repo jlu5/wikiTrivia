@@ -30,9 +30,12 @@ build_hint([Head | Rest], Length, NumTries) :-
 % give_hint/2
 % when called gives hint and breaks up CanonicalAnswer into a char list
 % NumTries Indicates the number of attempts the user has done as a guess, and is used to see how much of the letter should be revealed.
+% So far the game is hardcoded to give 3 attempts:
+%   The first hint shows just the number of letters in the canonical answer
+%   The second hint shows the first letter of the canonical answer
 give_hint(CanonicalAnswer, NumAttemptsRemaining) :-
   max_chances(MaxChances),
-  NumTries is MaxChances - NumAttemptsRemaining,
+  NumTries is MaxChances - NumAttemptsRemaining - 1,
   string_length(CanonicalAnswer, Length),
   string_chars(CanonicalAnswer, Chars),
   write("HINT: "),
