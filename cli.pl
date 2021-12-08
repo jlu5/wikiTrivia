@@ -77,12 +77,13 @@ score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, _, Score) :-
   Score is max(0, 1 - Diff / ScoringRange),
   format("Close! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
-score_answer(_, CanonicalAnswer, _, _, NumAttempsRemaining, 0) :-
-  (
-    NumAttempsRemaining = 0 ->  
-      format("Incorrect! Try Again! \n"); 
-      format("Incorrect! The answer was ~w \n", [CanonicalAnswer]) 
-  ).
+score_answer(_, CanonicalAnswer, _, _, NumAttemptsRemaining, 0) :-
+  NumAttemptsRemaining > 0, 
+  format("Incorrect! Try Again! \n"), 
+  give_hint(CanonicalAnswer, NumAttemptsRemaining). 
+
+score_answer(_, CanonicalAnswer, _, _, 0, 0) :-
+  format("Incorrect! The answer was ~w \n", [CanonicalAnswer]). 
 
 % For text questions, loop IFF the answer is incorrect and NumAttemptsRemaining > 1
 get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore) :-
@@ -91,16 +92,16 @@ get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, Fina
   read_line_to_string(user_input, UserAnswer),
   NewNumAttemptsRemaining is NumAttemptsRemaining - 1,
   % ( condition -> then_clause ; else_clause )
-  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NumAttempsRemaining, ScoreTemp),
+  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NewNumAttemptsRemaining, ScoreTemp),
   (
     ScoreTemp = 0 ->
       get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NewNumAttemptsRemaining, FinalQuestionScore) ;
       FinalQuestionScore = ScoreTemp
   ).
 % Otherwise, take the next answer's score as the final score for this question
-get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttempsRemaining, FinalQuestionScore) :-
+get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore) :-
   read_line_to_string(user_input, UserAnswer),
-  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NumAttempsRemaining, FinalQuestionScore).
+  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore).
 
 
 % For text answers, we allow them to retry as long as NumAttemptsRemaining is not 0
