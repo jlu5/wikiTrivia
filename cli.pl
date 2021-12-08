@@ -51,7 +51,7 @@ member_case_insensitive(Input, List) :-
 % score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, ScoringRange, Score) takes in a user's answer to a question and compares
 % it case-insensitively to a list of canonical and alternative (accepted) answers, producing a positive Score
 % if the answer is correct and 0 otherwise
-score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, Score) :-
+score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, NumAttempsRemaining, Score) :-
   %AcceptableAnswers = [CanonicalAnswer|AlternativeAnswers],
   %format("DBG score_answer AcceptableAnswers=~w text correct case, Score=~w\n", [AcceptableAnswers, Score]),
   member_case_insensitive(UserAnswer, [CanonicalAnswer|AlternativeAnswers]),
@@ -62,16 +62,14 @@ score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, _, Score) :-
 % score_answer(UserAnswer, CanonicalAnswer, AlternativeAnswers, Score, ScoringRange) takes in one additional argument,
 % ScoringRange, and uses that to give part scores to answers that are reasonably close to the actual answer using the following
 % formula: Score = max(0, 1- abs(SubmittedAnswer - RealAnswer) / ScoringRange)
-score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, 0) :-
-  format("DBG score_answernumber out of range case\n"),
+score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, _, 0) :-
   atom_number(UserAnswer, NumUserAnswer),
   number(CanonicalAnswer),
   Diff is abs(NumUserAnswer - CanonicalAnswer),
   Diff >= ScoringRange,
   format("You were off by over ~w! The answer was ~w \n", [ScoringRange, CanonicalAnswer]).
 
-score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, Score) :-
-  format("DBG score_answernumber in range case\n"),
+score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, _, Score) :-
   atom_number(UserAnswer, NumUserAnswer),
   number(CanonicalAnswer),
   Diff is abs(NumUserAnswer - CanonicalAnswer),
@@ -79,8 +77,12 @@ score_answer(UserAnswer, CanonicalAnswer, _, ScoringRange, Score) :-
   Score is max(0, 1 - Diff / ScoringRange),
   format("Close! The (canonical) answer was ~w \n", [CanonicalAnswer]).
 
-score_answer(_, CanonicalAnswer, _, _, 0) :-
-  format("Incorrect! The answer was ~w \n", [CanonicalAnswer]).
+score_answer(_, CanonicalAnswer, _, _, NumAttempsRemaining, 0) :-
+  (
+    NumAttempsRemaining = 0 -> 
+      format("Incorrect! Try Again! \n"); 
+      format("Incorrect! The answer was ~w \n", [CanonicalAnswer]) 
+  ).
 
 % For text questions, loop IFF the answer is incorrect and NumAttemptsRemaining > 1
 get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, FinalQuestionScore) :-
@@ -88,18 +90,17 @@ get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttemptsRemaining, Fina
   \+ number(RHSLabel),
   read_line_to_string(user_input, UserAnswer),
   NewNumAttemptsRemaining is NumAttemptsRemaining - 1,
-  format("Checking if answer got score 0, NewNumAttemptsRemaining = ~w\n", [NewNumAttemptsRemaining]),
   % ( condition -> then_clause ; else_clause )
-  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, ScoreTemp),
+  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NumAttempsRemaining, ScoreTemp),
   (
     ScoreTemp = 0 ->
       get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NewNumAttemptsRemaining, FinalQuestionScore) ;
       FinalQuestionScore = ScoreTemp
   ).
 % Otherwise, take the next answer's score as the final score for this question
-get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, _, FinalQuestionScore) :-
+get_answer_loop(RHSLabel, RHSAltLabels, ScoringRange, NumAttempsRemaining, FinalQuestionScore) :-
   read_line_to_string(user_input, UserAnswer),
-  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, FinalQuestionScore).
+  score_answer(UserAnswer, RHSLabel, RHSAltLabels, ScoringRange, NumAttempsRemaining, FinalQuestionScore).
 
 
 % For text answers, we allow them to retry as long as NumAttemptsRemaining is not 0
